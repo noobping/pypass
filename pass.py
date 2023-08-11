@@ -10,6 +10,11 @@ class PassWrapper:
 class PassWrapper:
     # ... other methods ...
 
+    import re
+
+class PassWrapper:
+    # ... other methods ...
+
     def list_passwords(self, folder=''):
         command = ['pass', 'ls', folder]
         result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -22,22 +27,29 @@ class PassWrapper:
         output = ansi_escape.sub('', output)
 
         lines = output.split('\n')[1:]  # Skip the first line that shows the folder name
-        paths = []
-        current_path = []
+        tree = []
+        stack = [tree]
 
         for line in lines:
             indentation = len(re.match(r'^[│\s]*', line).group())
             level = indentation // 4
-            name = line.split(' ')[-1].strip()
+            name = line.strip().split(' ')[-1]
             if not name:
                 continue
 
-            current_path = current_path[:level]
-            current_path.append(name)
-            path_string = '/'.join(current_path)
-            paths.append(path_string)
+            while len(stack) - 1 > level:
+                stack.pop()
 
-        return paths
+            node = stack[-1]
+            if '/' in name:  # Indicates a folder
+                folder_name = name[:-1]
+                new_node = []
+                node.append({folder_name: new_node})
+                stack.append(new_node)
+            else:
+                node.append(name)
+
+        return tree
 
     def get_password(self, path):
         command = ['pass', path]
