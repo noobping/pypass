@@ -12,7 +12,7 @@ class PassWrapper:
     def __init__(self):
         pass
 
-    def list_passwords(self, folder='.'):
+    def list_passwords(self, folder='.', filter_valid_files=False):
         command = ['pass', 'ls', folder]
         result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         output = result.stdout.decode('utf-8') if result.returncode == 0 else None
@@ -35,10 +35,14 @@ class PassWrapper:
             if indent == current_indent and (stripped_line.startswith("├──") or stripped_line.startswith("└──")):
                 item_name = stripped_line.replace("├──", "").replace("└──", "").strip()
                 item_path = os.path.join(password_store_path, folder.lstrip('.'), item_name) if folder != '.' else os.path.join(password_store_path, item_name)
-                file_command = ['file', item_path]
-                file_result = subprocess.run(file_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                file_output = file_result.stdout.decode('utf-8') if file_result.returncode == 0 else None
-                if file_output and ("PGP RSA encrypted session key" in file_output or "directory" in file_output):
+                
+                if filter_valid_files:
+                    file_command = ['file', item_path]
+                    file_result = subprocess.run(file_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    file_output = file_result.stdout.decode('utf-8') if file_result.returncode == 0 else None
+                    if file_output and ("PGP RSA encrypted session key" in file_output or "directory" in file_output):
+                        children.append(item_name)
+                else:
                     children.append(item_name)
             elif indent < current_indent:
                 break
@@ -163,10 +167,6 @@ class PasswordManagerApplication(Gtk.Application):
         win.present()
 
 def main():
-    pass_manager = PassWrapper()
-    password_tree = pass_manager.list_passwords('dev/vps/db')  # List all passwords
-    print(password_tree)
-
     app = PasswordManagerApplication()
     app.run()
 
