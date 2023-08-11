@@ -3,7 +3,7 @@ import subprocess
 
 import gi
 
-gi.require_version('Gtk', '3.0')
+gi.require_version('Gtk', '4.0')
 from gi.repository import Gtk
 
 
@@ -74,46 +74,51 @@ class PassWrapper:
         return result.returncode == 0
 
 
-class PasswordApp(Gtk.Window):
+class PasswordApp(Gtk.ApplicationWindow):
 
-    def __init__(self):
-        super(PasswordApp, self).__init__(title="Password Manager")
-        self.set_border_width(10)
+    def __init__(self, app):
+        super().__init__(application=app)
+        self.set_title("Password Manager")
+        self.set_default_size(400, 300)
 
         # Initialize PassWrapper
         self.pass_manager = PassWrapper()
 
-        # Create a TreeView
-        self.treeview = Gtk.TreeView()
-        self.store = Gtk.TreeStore(str)
-        self.treeview.set_model(self.store)
-        self.renderer = Gtk.CellRendererText()
-        self.column = Gtk.TreeViewColumn("Passwords", self.renderer, text=0)
-        self.treeview.append_column(self.column)
-        
+        # Create a ListBox
+        self.list_box = Gtk.ListBox()
+
         # Create a scrolled window
         self.scrolled_window = Gtk.ScrolledWindow()
-        self.scrolled_window.add(self.treeview)
-        self.add(self.scrolled_window)
+        self.scrolled_window.set_child(self.list_box)
+        self.set_child(self.scrolled_window)
 
-        # Get passwords and populate the tree
+        # Get passwords and populate the list
         self.password_tree = self.pass_manager.list_passwords('.')
-        self.populate_tree(self.password_tree, None)
+        self.populate_list(self.password_tree, '')
 
-    def populate_tree(self, tree, parent_iter):
+    def populate_list(self, tree, path_prefix):
         for item in tree:
             if isinstance(item, dict):
                 for folder_name, folder_contents in item.items():
-                    folder_iter = self.store.append(parent_iter, [folder_name])
-                    self.populate_tree(folder_contents, folder_iter)
+                    new_path_prefix = path_prefix + folder_name + '/'
+                    self.populate_list(folder_contents, new_path_prefix)
             else:
-                self.store.append(parent_iter, [item])
+                path = path_prefix + item
+                label = Gtk.Label(label=path)
+                self.list_box.append(label)
+
+class PasswordManagerApplication(Gtk.Application):
+
+    def __init__(self):
+        super().__init__()
+
+    def do_activate(self):
+        win = PasswordApp(self)
+        win.present()
 
 def main():
-    app = PasswordApp()
-    app.connect("destroy", Gtk.main_quit)
-    app.show_all()
-    Gtk.main()
+    app = PasswordManagerApplication()
+    app.run()
 
 if __name__ == "__main__":
     main()
