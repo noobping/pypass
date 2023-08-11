@@ -78,7 +78,6 @@ class PasswordApp(Gtk.ApplicationWindow):
 
     def __init__(self, app):
         super().__init__(application=app)
-        self.set_title("Password Manager")
         self.set_default_size(400, 300)
 
         # Initialize PassWrapper
@@ -86,26 +85,48 @@ class PasswordApp(Gtk.ApplicationWindow):
 
         # Create a ListBox
         self.list_box = Gtk.ListBox()
+        self.list_box.connect('row-activated', self.on_row_activated)
+
+        # Create a back button
+        self.back_button = Gtk.Button(label="Back")
+        self.back_button.connect('clicked', self.on_back_button_clicked)
+
+        # Create a header bar
+        self.header_bar = Gtk.HeaderBar()
+        self.header_bar.set_show_title_buttons(True)
+        self.header_bar.pack_start(self.back_button)
+        self.set_titlebar(self.header_bar)
 
         # Create a scrolled window
         self.scrolled_window = Gtk.ScrolledWindow()
         self.scrolled_window.set_child(self.list_box)
         self.set_child(self.scrolled_window)
 
-        # Get passwords and populate the list
-        self.password_tree = self.pass_manager.list_passwords('.')
-        self.populate_list(self.password_tree, '')
+        # Initial folder
+        self.current_folder = '.'
+        self.load_folder(self.current_folder)
 
-    def populate_list(self, tree, path_prefix):
-        for item in tree:
-            if isinstance(item, dict):
-                for folder_name, folder_contents in item.items():
-                    new_path_prefix = path_prefix + folder_name + '/'
-                    self.populate_list(folder_contents, new_path_prefix)
-            else:
-                path = path_prefix + item
-                label = Gtk.Label(label=path)
-                self.list_box.append(label)
+    def load_folder(self, folder):
+        self.current_folder = folder
+        self.set_title(folder if folder != '.' else 'Password Manager')
+
+        # Remove all children from the list box
+        for row in list(self.list_box):
+            self.list_box.remove(row)
+
+        passwords = self.pass_manager.list_passwords(folder)
+        for item in passwords:
+            label = Gtk.Label(label=item)
+            self.list_box.append(label)
+
+    def on_row_activated(self, list_box, row):
+        selected_item = row.get_child().get_text()
+        new_folder = self.current_folder + '/' + selected_item if self.current_folder != '.' else selected_item
+        self.load_folder(new_folder)
+
+    def on_back_button_clicked(self, button):
+        parent_folder = '/'.join(self.current_folder.split('/')[:-1]) if '/' in self.current_folder else '.'
+        self.load_folder(parent_folder)
 
 class PasswordManagerApplication(Gtk.Application):
 
