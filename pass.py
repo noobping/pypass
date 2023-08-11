@@ -42,6 +42,11 @@ class PassWrapper:
         password_tree = self.list_passwords(folder)
         return password_tree
 
+    def show_password(self, path):
+        command = ['pass', 'show', path]
+        result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        return result.stdout.decode('utf-8') if result.returncode == 0 else None
+
     def get_password(self, path):
         command = ['pass', path]
         result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -106,8 +111,34 @@ class PasswordApp(Gtk.ApplicationWindow):
 
     def on_row_activated(self, list_box, row):
         selected_item = row.get_child().get_text()
-        new_folder = self.current_folder + '/' + selected_item if self.current_folder != '.' else selected_item
-        self.load_folder(new_folder)
+        new_path = self.current_folder + '/' + selected_item if self.current_folder != '.' else selected_item
+        if selected_item.endswith('/'):  # If the item is a folder
+            self.load_folder(new_path)
+        else:
+            # Show the contents of the selected password file
+            password_content = self.pass_manager.show_password(new_path)
+            self.show_password_dialog(password_content)
+
+    def show_password_dialog(self, content):
+        dialog = Gtk.Dialog(transient_for=self, modal=True)
+        dialog.set_default_size(300, 200)
+        dialog.set_title("Password Content")
+
+        # Create a label to display the content
+        label = Gtk.Label(label=content)
+        label.set_selectable(True)  # Allow text selection
+        label.set_margin_top(10)
+        label.set_margin_bottom(10)
+        label.set_margin_start(10)
+        label.set_margin_end(10)
+
+        # Add the label to the dialog's content
+        dialog_box = dialog.get_child()
+        dialog_box.append(label)
+
+        # Connect the response signal and show the dialog
+        dialog.connect("response", lambda dlg, r: dlg.destroy())
+        dialog.show()
 
     def on_back_button_clicked(self, button):
         parent_folder = '/'.join(self.current_folder.split('/')[:-1]) if '/' in self.current_folder else '.'
@@ -123,10 +154,6 @@ class PasswordManagerApplication(Gtk.Application):
         win.present()
 
 def main():
-    pass_manager = PassWrapper()
-    password_tree = pass_manager.list_passwords('.')  # List all passwords
-    print(password_tree)
-
     app = PasswordManagerApplication()
     app.run()
 
