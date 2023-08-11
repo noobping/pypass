@@ -140,6 +140,7 @@ class PasswordApp(Gtk.ApplicationWindow):
         # Create a label to display the content
         label = Gtk.Label(label=content)
         label.set_selectable(True)  # Allow text selection
+        label.set_wrap(True)  # Enable text wrapping
         label.set_margin_top(10)
         label.set_margin_bottom(10)
         label.set_margin_start(10)
