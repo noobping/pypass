@@ -58,6 +58,12 @@ class PassWrapper:
         result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         return result.stdout.decode('utf-8') if result.returncode == 0 else None
 
+    def find_passwords(self, query):
+        command = ['pass', 'find', query]
+        result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        output = result.stdout.decode('utf-8') if result.returncode == 0 else None
+        return output.splitlines() if output else []
+
     def get_password(self, path):
         command = ['pass', path]
         result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -92,11 +98,20 @@ class PasswordApp(Gtk.ApplicationWindow):
         self.back_button = Gtk.Button(label="Back")
         self.back_button.connect('clicked', self.on_back_button_clicked)
 
+        # Create search button
+        self.search_entry = Gtk.Entry()
+        self.search_button = Gtk.Button(label="Search")
+        self.search_button.connect("clicked", self.on_search_clicked)
+
         # Create a header bar
         self.header_bar = Gtk.HeaderBar()
         self.header_bar.set_show_title_buttons(True)
         self.header_bar.pack_start(self.back_button)
         self.set_titlebar(self.header_bar)
+
+        # Add search to header
+        self.header_bar.pack_start(self.search_entry)
+        self.header_bar.pack_start(self.search_button)
 
         # Create a scrolled window
         self.scrolled_window = Gtk.ScrolledWindow()
@@ -107,9 +122,18 @@ class PasswordApp(Gtk.ApplicationWindow):
         self.current_folder = '.'
         self.load_folder(self.current_folder)
 
+    def on_search_clicked(self, button):
+        query = self.search_entry.get_text()
+        results = self.pass_manager.find_passwords(query)
+        self.load_folder(results)
+
     def load_folder(self, folder):
         self.current_folder = folder
         self.set_title(folder if folder != '.' else 'Password Store')
+
+        # Hide or show the back button based on whether on root
+        is_root = folder == '.'
+        self.back_button.set_visible(not is_root)
 
         # Remove all children from the list box
         for row in list(self.list_box):
