@@ -145,9 +145,14 @@ class PasswordApp(Gtk.ApplicationWindow):
         label.set_margin_start(10)
         label.set_margin_end(10)
 
-        # Add the label to the dialog's content
+        # Create a scrolled window and set the label as its child
+        scrolled_window = Gtk.ScrolledWindow()
+        scrolled_window.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+        scrolled_window.set_child(label)  # Use set_child instead of add
+
+        # Add the scrolled window to the dialog's content
         dialog_box = dialog.get_child()
-        dialog_box.append(label)
+        dialog_box.append(scrolled_window)
 
         # Connect the response signal and show the dialog
         dialog.connect("response", lambda dlg, r: dlg.destroy())
