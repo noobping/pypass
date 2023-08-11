@@ -1,5 +1,11 @@
-import subprocess
 import re
+import subprocess
+
+import gi
+
+gi.require_version('Gtk', '3.0')
+from gi.repository import Gtk
+
 
 class PassWrapper:
     def __init__(self):
@@ -67,7 +73,47 @@ class PassWrapper:
         result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         return result.returncode == 0
 
-# Example usage
-pass_manager = PassWrapper()
-password_tree = pass_manager.list_passwords('.')  # List all passwords
-print(password_tree)
+
+class PasswordApp(Gtk.Window):
+
+    def __init__(self):
+        super(PasswordApp, self).__init__(title="Password Manager")
+        self.set_border_width(10)
+
+        # Initialize PassWrapper
+        self.pass_manager = PassWrapper()
+
+        # Create a TreeView
+        self.treeview = Gtk.TreeView()
+        self.store = Gtk.TreeStore(str)
+        self.treeview.set_model(self.store)
+        self.renderer = Gtk.CellRendererText()
+        self.column = Gtk.TreeViewColumn("Passwords", self.renderer, text=0)
+        self.treeview.append_column(self.column)
+        
+        # Create a scrolled window
+        self.scrolled_window = Gtk.ScrolledWindow()
+        self.scrolled_window.add(self.treeview)
+        self.add(self.scrolled_window)
+
+        # Get passwords and populate the tree
+        self.password_tree = self.pass_manager.list_passwords('.')
+        self.populate_tree(self.password_tree, None)
+
+    def populate_tree(self, tree, parent_iter):
+        for item in tree:
+            if isinstance(item, dict):
+                for folder_name, folder_contents in item.items():
+                    folder_iter = self.store.append(parent_iter, [folder_name])
+                    self.populate_tree(folder_contents, folder_iter)
+            else:
+                self.store.append(parent_iter, [item])
+
+def main():
+    app = PasswordApp()
+    app.connect("destroy", Gtk.main_quit)
+    app.show_all()
+    Gtk.main()
+
+if __name__ == "__main__":
+    main()
