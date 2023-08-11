@@ -1,3 +1,4 @@
+import os
 import re
 import subprocess
 
@@ -22,17 +23,23 @@ class PassWrapper:
         ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
         output = ansi_escape.sub('', output)
 
-        lines = output.split('\n')
+        lines = output.split('\n')[1:]  # Skip the first line
         children = []
         current_indent = None
-        for line in lines[1:]:  # Skip the first line
+        password_store_path = os.path.expanduser('~/.password-store') # Default password store path
+        for line in lines:
             stripped_line = line.lstrip()
             indent = len(line) - len(stripped_line)
             if current_indent is None:
                 current_indent = indent
-            elif indent == current_indent and stripped_line.startswith("├──"):
-                item_name = stripped_line.lstrip("├── ").strip('/')
-                children.append(item_name)
+            if indent == current_indent and (stripped_line.startswith("├──") or stripped_line.startswith("└──")):
+                item_name = stripped_line.replace("├──", "").replace("└──", "").strip()
+                item_path = os.path.join(password_store_path, folder.lstrip('.'), item_name) if folder != '.' else os.path.join(password_store_path, item_name)
+                file_command = ['file', item_path]
+                file_result = subprocess.run(file_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                file_output = file_result.stdout.decode('utf-8') if file_result.returncode == 0 else None
+                if file_output and ("PGP RSA encrypted session key" in file_output or "directory" in file_output):
+                    children.append(item_name)
             elif indent < current_indent:
                 break
         return children
@@ -156,6 +163,10 @@ class PasswordManagerApplication(Gtk.Application):
         win.present()
 
 def main():
+    pass_manager = PassWrapper()
+    password_tree = pass_manager.list_passwords('dev/vps/db')  # List all passwords
+    print(password_tree)
+
     app = PasswordManagerApplication()
     app.run()
 
