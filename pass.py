@@ -122,7 +122,6 @@ class PasswordApp(Gtk.ApplicationWindow):
     def show_password_dialog(self, content):
         dialog = Gtk.Dialog(transient_for=self, modal=True)
         dialog.set_default_size(300, 200)
-        dialog.set_title("Password Content")
 
         # Create a label to display the content
         label = Gtk.Label(label=content)
