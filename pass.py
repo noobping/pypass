@@ -11,17 +11,7 @@ class PassWrapper:
     def __init__(self):
         pass
 
-    import re
-
-class PassWrapper:
-    # ... other methods ...
-
-    import re
-
-class PassWrapper:
-    # ... other methods ...
-
-    def list_passwords(self, folder=''):
+    def list_passwords(self, folder='.'):
         command = ['pass', 'ls', folder]
         result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         output = result.stdout.decode('utf-8') if result.returncode == 0 else None
@@ -32,30 +22,25 @@ class PassWrapper:
         ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
         output = ansi_escape.sub('', output)
 
-        lines = output.split('\n')[1:]  # Skip the first line that shows the folder name
-        tree = []
-        stack = [tree]
+        lines = output.split('\n')
+        children = []
+        current_indent = None
+        for line in lines[1:]:  # Skip the first line
+            stripped_line = line.lstrip()
+            indent = len(line) - len(stripped_line)
+            if current_indent is None:
+                current_indent = indent
+            elif indent == current_indent and stripped_line.startswith("├──"):
+                item_name = stripped_line.lstrip("├── ").strip('/')
+                children.append(item_name)
+            elif indent < current_indent:
+                break
+        return children
 
-        for line in lines:
-            indentation = len(re.match(r'^[│\s]*', line).group())
-            level = indentation // 4
-            name = line.strip().split(' ')[-1]
-            if not name:
-                continue
-
-            while len(stack) - 1 > level:
-                stack.pop()
-
-            node = stack[-1]
-            if '/' in name:  # Indicates a folder
-                folder_name = name[:-1]
-                new_node = []
-                node.append({folder_name: new_node})
-                stack.append(new_node)
-            else:
-                node.append(name)
-
-        return tree
+    def get_folder_contents(self, folder):
+        # List all passwords and folders recursively
+        password_tree = self.list_passwords(folder)
+        return password_tree
 
     def get_password(self, path):
         command = ['pass', path]
@@ -114,8 +99,8 @@ class PasswordApp(Gtk.ApplicationWindow):
         for row in list(self.list_box):
             self.list_box.remove(row)
 
-        passwords = self.pass_manager.list_passwords(folder)
-        for item in passwords:
+        folder_contents = self.pass_manager.get_folder_contents(folder)
+        for item in folder_contents:
             label = Gtk.Label(label=item)
             self.list_box.append(label)
 
@@ -138,6 +123,10 @@ class PasswordManagerApplication(Gtk.Application):
         win.present()
 
 def main():
+    pass_manager = PassWrapper()
+    password_tree = pass_manager.list_passwords('.')  # List all passwords
+    print(password_tree)
+
     app = PasswordManagerApplication()
     app.run()
 
