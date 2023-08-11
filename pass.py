@@ -98,7 +98,7 @@ class PasswordApp(Gtk.ApplicationWindow):
 
     def load_folder(self, folder):
         self.current_folder = folder
-        self.set_title(folder if folder != '.' else 'Password Manager')
+        self.set_title(folder if folder != '.' else 'Password Store')
 
         # Remove all children from the list box
         for row in list(self.list_box):
@@ -111,16 +111,19 @@ class PasswordApp(Gtk.ApplicationWindow):
 
     def on_row_activated(self, list_box, row):
         selected_item = row.get_child().get_text()
-        new_path = self.current_folder + '/' + selected_item if self.current_folder != '.' else selected_item
-        if selected_item.endswith('/'):  # If the item is a folder
-            self.load_folder(new_path)
+        # Check if the selected item is a folder by listing its content
+        item_path = self.current_folder + '/' + selected_item if self.current_folder != '.' else selected_item
+        sub_items = self.pass_manager.list_passwords(item_path)
+        if sub_items:
+            # Navigate into the folder
+            self.load_folder(item_path)
         else:
-            # Show the contents of the selected password file
-            password_content = self.pass_manager.show_password(new_path)
-            self.show_password_dialog(password_content)
+            # Display the password content
+            password_content = self.pass_manager.show_password(item_path)
+            self.show_password_dialog(password_content, item_path)
 
-    def show_password_dialog(self, content):
-        dialog = Gtk.Dialog(transient_for=self, modal=True)
+    def show_password_dialog(self, content, title):
+        dialog = Gtk.Dialog(transient_for=self, modal=True, title=title)
         dialog.set_default_size(300, 200)
 
         # Create a label to display the content
