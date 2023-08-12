@@ -212,10 +212,16 @@ class PasswordApp(Gtk.ApplicationWindow):
         password_label = Gtk.Label(label=lines[0])
         password_label.set_selectable(True)
         password_label.set_wrap(True)
+        password_label.set_visible(False)
         grid.attach(password_label, 0, 0, 2, 1)
 
+        # Show password
+        show_password_button = Gtk.Button(label="Show password")
+        show_password_button.connect("clicked", self.on_show_button_clicked, password_label)
+        grid.attach(show_password_button, 0, 0, 2, 1)
+
         # Create the "Copy Password" button and connect it to the handler
-        copy_button = Gtk.Button(label="Copy Password")
+        copy_button = Gtk.Button(label="📋")
         copy_button.connect("clicked", self.on_copy_button_clicked, password_label)
         header_bar.pack_start(copy_button)
 
@@ -228,8 +234,13 @@ class PasswordApp(Gtk.ApplicationWindow):
                 value_widget = Gtk.Label(label=value_text.strip())
                 value_widget.set_selectable(True)
                 value_widget.set_wrap(True)
+                value_widget.set_visible(False)
 
-                copy_button = Gtk.Button(label="Copy")
+                show_button = Gtk.Button(label=f"Show {label_text.strip()}")
+                show_button.connect("clicked", self.on_show_button_clicked, value_widget)
+                grid.attach(show_button, 1, i, 1, 1)
+
+                copy_button = Gtk.Button(label="📋")
                 copy_button.connect("clicked", self.on_copy_button_clicked, value_widget)
                 grid.attach(copy_button, 2, i, 1, 1)
 
@@ -248,6 +259,11 @@ class PasswordApp(Gtk.ApplicationWindow):
         # Connect the response signal and show the dialog
         dialog.connect("response", lambda dlg, r: dlg.destroy())
         dialog.set_visible(True)
+
+    def on_show_button_clicked(self, button, label):
+        value = not label.get_visible()
+        label.set_visible(value)
+        button.set_visible(not value)
 
     def on_copy_button_clicked(self, button, label):
         clipboard = Gdk.Display.get_default().get_clipboard()
