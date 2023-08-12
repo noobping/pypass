@@ -8,7 +8,7 @@ import gi
 gi.require_version('Gdk', '4.0')
 gi.require_version('GdkWayland', '4.0')
 gi.require_version('Gtk', '4.0')
-from gi.repository import Gdk, GdkWayland, Gtk
+from gi.repository import Gdk, GdkWayland, Gtk, Gio, GdkPixbuf
 
 
 class ConfigManager:
@@ -111,10 +111,10 @@ class PassWrapper:
         return result.stdout.decode('utf-8') if result.returncode == 0 else None
 
 
-class PasswordApp(Gtk.ApplicationWindow):
+class Window(Gtk.ApplicationWindow):
 
-    def __init__(self, app):
-        super().__init__(application=app)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.set_default_size(400, 300)
 
         # Initialize PassWrapper
@@ -125,8 +125,9 @@ class PasswordApp(Gtk.ApplicationWindow):
         self.list_box.connect('row-activated', self.on_row_activated)
 
         # Create a back button
-        self.back_button = Gtk.Button(label="←")
+        self.back_button = Gtk.Button()
         self.back_button.connect('clicked', self.on_back_button_clicked)
+        self.back_button.set_icon_name("go-previous-symbolic")
 
         # Create a header bar
         header_bar = Gtk.HeaderBar()
@@ -144,9 +145,22 @@ class PasswordApp(Gtk.ApplicationWindow):
         self.search_bar.connect_entry(self.search_entry)
 
         # Create a search button
-        self.search_button = Gtk.Button(label="🔍")
+        self.search_button = Gtk.Button()
         self.search_button.connect('clicked', self.on_search_button_clicked)
+        self.search_button.set_icon_name("edit-find-symbolic")
         header_bar.pack_start(self.search_button)
+
+        # Create menu button
+        menu_button = Gtk.MenuButton()
+        menu_button.set_icon_name("open-menu-symbolic")
+        header_bar.pack_end(menu_button)
+
+        # Create menu model
+        menu_model = Gio.Menu()
+        menu_model.append("Preferences", "app.preferences")
+        menu_model.append("About", "app.about")
+        menu_model.append("Quit", "app.quit")
+        menu_button.set_menu_model(menu_model)
 
         # Create a scrolled window
         scrolled_window = Gtk.ScrolledWindow()
@@ -171,15 +185,15 @@ class PasswordApp(Gtk.ApplicationWindow):
         # If search mode is active, grab focus to the search entry
         if search_mode:
             self.search_entry.grab_focus()
-            self.search_button.set_label("←")
+            self.back_button.set_icon_name("go-previous-symbolic")
         else:
-            self.search_button.set_label("🔍")
+            self.search_button.set_icon_name("edit-find-symbolic")
 
     def on_search_entry_activate(self, entry):
         query = entry.get_text()
         self.current_folder = '.'
         self.search_bar.set_search_mode(False)
-        self.search_button.set_label("🔍")
+        self.search_button.set_icon_name("edit-find-symbolic")
 
         self.set_title('Password Search')
         self.back_button.set_visible(True)
@@ -322,18 +336,63 @@ class PasswordApp(Gtk.ApplicationWindow):
         self.load_folder(parent_folder)
 
 
-class PasswordManagerApplication(Gtk.Application):
+class Application(Gtk.Application):
+    """The main application singleton class."""
 
     def __init__(self):
-        super().__init__()
+        super().__init__(application_id='com.github.noobping.gpass',
+                         flags=Gio.ApplicationFlags.DEFAULT_FLAGS)
+        self.create_action('quit', lambda *_: self.quit(), ['<primary>q'])
+        self.create_action('about', self.on_about_action, ['<primary>a'])
+        self.create_action('preferences', self.on_preferences_action, ['<primary>p'])
 
     def do_activate(self):
-        win = PasswordApp(self)
+        """Called when the application is activated.
+
+        We raise the application's main window, creating it if
+        necessary.
+        """
+        win = self.props.active_window
+        if not win:
+            win = Window(application=self)
         win.present()
+
+    def on_about_action(self, widget, _):
+        """Callback for the app.about action."""
+        pixbuf = GdkPixbuf.Pixbuf.new_from_file("gpass.svg")
+        logo = Gdk.Texture.new_for_pixbuf(pixbuf)
+        about = Gtk.AboutDialog(transient_for=self.props.active_window,
+                                modal=True,
+                                program_name='Gnome Password Store',
+                                logo=logo,
+                                version='0.1.0',
+                                license_type=Gtk.License.GPL_3_0,
+                                authors=['noobping'],
+                                copyright='© 2023 noobping')
+        about.present()
+
+    def on_preferences_action(self, widget, _):
+        """Callback for the app.preferences action."""
+        print('app.preferences action activated')
+
+    def create_action(self, name, callback, shortcuts=None):
+        """Add an application action.
+
+        Args:
+            name: the name of the action
+            callback: the function to be called when the action is
+              activated
+            shortcuts: an optional list of accelerators
+        """
+        action = Gio.SimpleAction.new(name, None)
+        action.connect("activate", callback)
+        self.add_action(action)
+        if shortcuts:
+            self.set_accels_for_action(f"app.{name}", shortcuts)
 
 
 def main():
-    app = PasswordManagerApplication()
+    app = Application()
     app.run()
 
 if __name__ == "__main__":
