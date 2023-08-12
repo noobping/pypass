@@ -137,6 +137,8 @@ class PasswordApp(Gtk.ApplicationWindow):
     def on_search_entry_activate(self, entry):
         query = entry.get_text()
         self.current_folder = '.'
+        self.search_bar.set_search_mode(False)
+        self.search_button.set_label("🔍")
 
         self.set_title('Password Search')
         self.back_button.set_visible(True)
