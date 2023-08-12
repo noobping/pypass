@@ -195,6 +195,11 @@ class PasswordApp(Gtk.ApplicationWindow):
         header_bar.set_show_title_buttons(True)
         dialog.set_titlebar(header_bar)
 
+        # Edit or view mode
+        edit_button = Gtk.Button(label="✏")
+        edit_button.connect("clicked", self.on_edit_button_clicked)
+        header_bar.pack_start(edit_button)
+
         # Create a scrolled window
         scrolled_window = Gtk.ScrolledWindow()
         scrolled_window.set_vexpand(True)
@@ -221,9 +226,9 @@ class PasswordApp(Gtk.ApplicationWindow):
         grid.attach(show_password_button, 0, 0, 2, 1)
 
         # Create the "Copy Password" button and connect it to the handler
-        copy_button = Gtk.Button(label="📋")
-        copy_button.connect("clicked", self.on_copy_button_clicked, password_label)
-        header_bar.pack_start(copy_button)
+        copy_password_button = Gtk.Button(label="📋")
+        copy_password_button.connect("clicked", self.on_copy_button_clicked, password_label)
+        grid.attach(copy_password_button, 2, 0, 1, 1)
 
         # Handle the rest of the lines
         for i, line in enumerate(lines[1:], start=1):
@@ -259,6 +264,9 @@ class PasswordApp(Gtk.ApplicationWindow):
         # Connect the response signal and show the dialog
         dialog.connect("response", lambda dlg, r: dlg.destroy())
         dialog.set_visible(True)
+
+    def on_edit_button_clicked(self, button):
+        print("edit mode")
 
     def on_show_button_clicked(self, button, label):
         value = not label.get_visible()
