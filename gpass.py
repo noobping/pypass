@@ -121,7 +121,8 @@ class Dialog(Gtk.Dialog):
         self.set_titlebar(header_bar)
 
         # Edit or view mode
-        edit_button = Gtk.Button(label="✏")
+        edit_button = Gtk.Button()
+        edit_button.set_icon_name("edit-symbolic")
         edit_button.connect("clicked", self.on_edit_button_clicked)
         header_bar.pack_start(edit_button)
 
@@ -153,7 +154,8 @@ class Dialog(Gtk.Dialog):
         grid.attach(show_password_button, 0, 0, 2, 1)
 
         # Create the "Copy Password" button and connect it to the handler
-        copy_password_button = Gtk.Button(label="📋")
+        copy_password_button = Gtk.Button()
+        copy_password_button.set_icon_name("edit-copy-symbolic")
         copy_password_button.connect("clicked", self.on_copy_button_clicked, password_label)
         grid.attach(copy_password_button, 2, 0, 1, 1)
 
@@ -172,7 +174,8 @@ class Dialog(Gtk.Dialog):
                 show_button.connect("clicked", self.on_show_button_clicked, value_widget)
                 grid.attach(show_button, 1, i, 1, 1)
 
-                copy_button = Gtk.Button(label="📋")
+                copy_button = Gtk.Button()
+                copy_button.set_icon_name("edit-copy-symbolic")
                 copy_button.connect("clicked", self.on_copy_button_clicked, value_widget)
                 grid.attach(copy_button, 2, i, 1, 1)
 
