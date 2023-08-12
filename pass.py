@@ -4,8 +4,10 @@ import subprocess
 
 import gi
 
+gi.require_version('Gdk', '4.0')
+gi.require_version('GdkWayland', '4.0')
 gi.require_version('Gtk', '4.0')
-from gi.repository import Gtk
+from gi.repository import Gdk, GdkWayland, Gtk
 
 
 class PassWrapper:
@@ -188,6 +190,11 @@ class PasswordApp(Gtk.ApplicationWindow):
         dialog = Gtk.Dialog(transient_for=self, modal=True, title=title)
         dialog.set_default_size(300, 200)
 
+        # Header
+        header_bar = Gtk.HeaderBar()
+        header_bar.set_show_title_buttons(True)
+        dialog.set_titlebar(header_bar)
+
         # Create a scrolled window
         scrolled_window = Gtk.ScrolledWindow()
         scrolled_window.set_vexpand(True)
@@ -207,6 +214,11 @@ class PasswordApp(Gtk.ApplicationWindow):
         password_label.set_wrap(True)
         grid.attach(password_label, 0, 0, 2, 1)
 
+        # Create the "Copy Password" button and connect it to the handler
+        copy_button = Gtk.Button(label="Copy Password")
+        copy_button.connect("clicked", self.on_copy_button_clicked, password_label)
+        header_bar.pack_start(copy_button)
+
         # Handle the rest of the lines
         for i, line in enumerate(lines[1:], start=1):
             # Check if the line follows the "label: value" pattern
@@ -216,6 +228,11 @@ class PasswordApp(Gtk.ApplicationWindow):
                 value_widget = Gtk.Label(label=value_text.strip())
                 value_widget.set_selectable(True)
                 value_widget.set_wrap(True)
+
+                copy_button = Gtk.Button(label="Copy")
+                copy_button.connect("clicked", self.on_copy_button_clicked, value_widget)
+                grid.attach(copy_button, 2, i, 1, 1)
+
                 grid.attach(label_widget, 0, i, 1, 1)
                 grid.attach(value_widget, 1, i, 1, 1)
             else:
@@ -231,6 +248,11 @@ class PasswordApp(Gtk.ApplicationWindow):
         # Connect the response signal and show the dialog
         dialog.connect("response", lambda dlg, r: dlg.destroy())
         dialog.set_visible(True)
+
+    def on_copy_button_clicked(self, button, label):
+        clipboard = Gdk.Display.get_default().get_clipboard()
+        text = label.get_label()
+        clipboard.set(text)
 
     def on_back_button_clicked(self, button):
         parent_folder = '/'.join(self.current_folder.split('/')[:-1]) if '/' in self.current_folder else '.'
