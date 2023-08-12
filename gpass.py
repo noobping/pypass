@@ -145,8 +145,8 @@ class Window(Gtk.ApplicationWindow):
         self.search_bar.connect_entry(self.search_entry)
 
         # Create a search button
-        self.search_button = Gtk.Button()
-        self.search_button.connect('clicked', self.on_search_button_clicked)
+        self.search_button = Gtk.ToggleButton()
+        self.search_button.connect('toggled', self.on_search_button_clicked)
         self.search_button.set_icon_name("edit-find-symbolic")
         header_bar.pack_start(self.search_button)
 
@@ -192,12 +192,12 @@ class Window(Gtk.ApplicationWindow):
     def on_search_entry_activate(self, entry):
         query = entry.get_text()
         self.current_folder = '.'
-        self.search_bar.set_search_mode(False)
         self.search_button.set_icon_name("edit-find-symbolic")
-
-        self.set_title('Password Search')
-        self.back_button.set_visible(True)
         self.search_button.set_visible(False)
+        self.search_button.set_active(False)
+        self.search_bar.set_search_mode(False)
+        self.back_button.set_visible(True)
+        self.set_title('Password Search')
 
         # Remove all children from the list box
         for row in list(self.list_box):
