@@ -242,7 +242,7 @@ class Window(Gtk.ApplicationWindow):
 
     def show_password_dialog(self, content, title):
         dialog = Gtk.Dialog(transient_for=self, modal=True, title=title)
-        dialog.set_default_size(300, 200)
+        dialog.set_default_size(280, 250)
 
         # Header
         header_bar = Gtk.HeaderBar()
@@ -263,6 +263,8 @@ class Window(Gtk.ApplicationWindow):
         grid = Gtk.Grid()
         grid.set_row_spacing(6)
         grid.set_column_spacing(6)
+        grid.set_halign(Gtk.Align.CENTER)
+        grid.set_valign(Gtk.Align.CENTER)
 
         # Split the content by lines
         lines = content.split('\n')
