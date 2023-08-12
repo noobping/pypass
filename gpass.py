@@ -451,11 +451,11 @@ class Application(Gtk.Application):
         logo = Gdk.Texture.new_for_pixbuf(pixbuf)
         about = Gtk.AboutDialog(transient_for=self.props.active_window,
                                 modal=True,
-                                program_name='Gnome Password Store',
+                                program_name='Password Store',
                                 logo=logo,
                                 version='0.1.0',
                                 license_type=Gtk.License.GPL_3_0,
-                                authors=['noobping'],
+                                authors=['noobping', 'ChatGPT-4'],
                                 copyright='© 2023 noobping')
         about.present()
 
