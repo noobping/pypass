@@ -84,7 +84,7 @@ class PasswordApp(Gtk.ApplicationWindow):
         self.list_box.connect('row-activated', self.on_row_activated)
 
         # Create a back button
-        self.back_button = Gtk.Button(label="Back")
+        self.back_button = Gtk.Button(label="<")
         self.back_button.connect('clicked', self.on_back_button_clicked)
 
         # Create a header bar
@@ -102,7 +102,11 @@ class PasswordApp(Gtk.ApplicationWindow):
         self.search_bar.set_child(self.search_entry)
         self.search_bar.set_show_close_button(True)
         self.search_bar.connect_entry(self.search_entry)
-        self.search_bar.set_search_mode(True)
+
+        # Create a search button
+        self.search_button = Gtk.Button(label="🔍")
+        self.search_button.connect('clicked', self.on_search_button_clicked)
+        self.header_bar.pack_start(self.search_button)
 
         # Create a scrolled window
         self.scrolled_window = Gtk.ScrolledWindow()
@@ -119,7 +123,7 @@ class PasswordApp(Gtk.ApplicationWindow):
         self.current_folder = '.'
         self.load_folder(self.current_folder)
 
-    def on_search_clicked(self, button):
+    def on_search_button_clicked(self, button):
         # Toggle search mode
         search_mode = not self.search_bar.get_search_mode()
         self.search_bar.set_search_mode(search_mode)
@@ -134,6 +138,7 @@ class PasswordApp(Gtk.ApplicationWindow):
 
         self.set_title('Password Search')
         self.back_button.set_visible(True)
+        self.search_button.set_visible(False)
 
         # Remove all children from the list box
         for row in list(self.list_box):
@@ -151,6 +156,7 @@ class PasswordApp(Gtk.ApplicationWindow):
         # Hide or show the back button based on whether on root
         is_root = folder == '.'
         self.back_button.set_visible(not is_root)
+        self.search_button.set_visible(is_root)
 
         # Remove all children from the list box
         for row in list(self.list_box):
