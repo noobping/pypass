@@ -1,3 +1,4 @@
+import configparser
 import os
 import re
 import subprocess
@@ -10,11 +11,46 @@ gi.require_version('Gtk', '4.0')
 from gi.repository import Gdk, GdkWayland, Gtk
 
 
+class ConfigManager:
+    def __init__(self, file_path='config.ini'):
+        self.config = configparser.ConfigParser()
+        self.file_path = file_path
+        if not os.path.exists(self.file_path):
+            self.create_default_config()
+        self.load_config()
+
+    def create_default_config(self):
+        self.config['Settings'] = {
+            'password_store_path': '~/.password-store',
+            'filter_valid_files': 'True'
+        }
+        self.save()
+
+    def load_config(self):
+        self.config.read(self.file_path)
+
+    def get(self, section, key, fallback=None):
+        return self.config.get(section, key, fallback=fallback)
+
+    def set(self, section, key, value):
+        if section not in self.config:
+            self.config.add_section(section)
+        self.config.set(section, key, value)
+
+    def save(self):
+        with open(self.file_path, 'w') as config_file:
+            self.config.write(config_file)
+
+
 class PassWrapper:
     def __init__(self):
-        pass
+        self.config_manager = ConfigManager()
+        self.password_store_path = self.config_manager.get('Settings', 'password_store_path')
+        self.filter_valid_files = self.config_manager.get('Settings', 'filter_valid_files').lower() == 'true'
 
-    def process_passwords_tree(self, folder='.', query=None, filter_valid_files=False):
+    def list_passwords(self, folder='.', query=None):
+        filter_valid_files = self.filter_valid_files
+
         if query:
             command = ['pass', 'find', query]
         else:
@@ -150,7 +186,7 @@ class PasswordApp(Gtk.ApplicationWindow):
         for row in list(self.list_box):
             self.list_box.remove(row)
 
-        folder_contents = self.pass_manager.process_passwords_tree(self.current_folder, query, True)
+        folder_contents = self.pass_manager.list_passwords(self.current_folder, query)
         for item in folder_contents:
             label = Gtk.Label(label=item)
             self.list_box.append(label)
@@ -168,7 +204,7 @@ class PasswordApp(Gtk.ApplicationWindow):
         for row in list(self.list_box):
             self.list_box.remove(row)
 
-        folder_contents = self.pass_manager.process_passwords_tree(folder)
+        folder_contents = self.pass_manager.list_passwords(folder)
         for item in folder_contents:
             label = Gtk.Label(label=item)
             self.list_box.append(label)
@@ -177,7 +213,7 @@ class PasswordApp(Gtk.ApplicationWindow):
         selected_item = row.get_child().get_text()
         # Check if the selected item is a folder by listing its content
         item_path = self.current_folder + '/' + selected_item if self.current_folder != '.' else selected_item
-        sub_items = self.pass_manager.process_passwords_tree(item_path)
+        sub_items = self.pass_manager.list_passwords(item_path)
         if sub_items:
             # Navigate into the folder
             self.load_folder(item_path)
@@ -282,6 +318,7 @@ class PasswordApp(Gtk.ApplicationWindow):
         parent_folder = '/'.join(self.current_folder.split('/')[:-1]) if '/' in self.current_folder else '.'
         self.load_folder(parent_folder)
 
+
 class PasswordManagerApplication(Gtk.Application):
 
     def __init__(self):
@@ -291,11 +328,8 @@ class PasswordManagerApplication(Gtk.Application):
         win = PasswordApp(self)
         win.present()
 
-def main():
-    pass_manager = PassWrapper()
-    password_tree = pass_manager.process_passwords_tree('.', 'nick', True)
-    print(password_tree)
 
+def main():
     app = PasswordManagerApplication()
     app.run()
 
