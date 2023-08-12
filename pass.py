@@ -64,62 +64,10 @@ class PassWrapper:
                 
         return children
 
-    def list_passwords(self, folder='.', filter_valid_files=False):
-        command = ['pass', 'ls', folder]
-        result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        output = result.stdout.decode('utf-8') if result.returncode == 0 else None
-        if output is None:
-            return None
-
-        # Remove ANSI escape codes
-        ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
-        output = ansi_escape.sub('', output)
-
-        lines = output.split('\n')[1:]  # Skip the first line
-        children = []
-        current_indent = None
-        password_store_path = os.path.expanduser('~/.password-store') # Default password store path
-        for line in lines:
-            stripped_line = line.lstrip()
-            indent = len(line) - len(stripped_line)
-            if current_indent is None:
-                current_indent = indent
-            if indent == current_indent and (stripped_line.startswith("├──") or stripped_line.startswith("└──")):
-                item_name = stripped_line.replace("├──", "").replace("└──", "").strip()
-                item_path = os.path.join(password_store_path, folder.lstrip('.'), item_name) if folder != '.' else os.path.join(password_store_path, item_name)
-                
-                if filter_valid_files:
-                    file_command = ['file', item_path]
-                    file_result = subprocess.run(file_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                    file_output = file_result.stdout.decode('utf-8') if file_result.returncode == 0 else None
-                    if file_output and ("PGP RSA encrypted session key" in file_output or "directory" in file_output):
-                        children.append(item_name)
-                else:
-                    children.append(item_name)
-            elif indent < current_indent:
-                break
-        return children
-
     def show_password(self, path):
         command = ['pass', 'show', path]
         result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         return result.stdout.decode('utf-8') if result.returncode == 0 else None
-
-    def get_password(self, path):
-        command = ['pass', path]
-        result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        return result.stdout.decode('utf-8').strip() if result.returncode == 0 else None
-
-    def insert_password(self, path, password):
-        command = ['pass', 'insert', '--multiline', path]
-        process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        process.communicate(input=password.encode('utf-8'))
-        return process.returncode == 0
-
-    def remove_password(self, path):
-        command = ['pass', 'rm', path]
-        result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        return result.returncode == 0
 
 
 class PasswordApp(Gtk.ApplicationWindow):
@@ -139,20 +87,19 @@ class PasswordApp(Gtk.ApplicationWindow):
         self.back_button = Gtk.Button(label="Back")
         self.back_button.connect('clicked', self.on_back_button_clicked)
 
-        # Create search button
-        self.search_entry = Gtk.Entry()
-        self.search_button = Gtk.Button(label="Search")
-        self.search_button.connect("clicked", self.on_search_clicked)
-
         # Create a header bar
         self.header_bar = Gtk.HeaderBar()
         self.header_bar.set_show_title_buttons(True)
         self.header_bar.pack_start(self.back_button)
         self.set_titlebar(self.header_bar)
 
-        # Add search to header
-        self.header_bar.pack_start(self.search_entry)
-        self.header_bar.pack_start(self.search_button)
+        # Create search button
+        self.search_bar = Gtk.SearchBar()
+        self.search_bar.set_visible(True)
+        self.set_child(self.search_bar)
+        # self.search_entry = Gtk.Entry()
+        # self.search_button = Gtk.Button(label="Search")
+        # self.search_button.connect("clicked", self.on_search_clicked)
 
         # Create a scrolled window
         self.scrolled_window = Gtk.ScrolledWindow()
@@ -191,7 +138,7 @@ class PasswordApp(Gtk.ApplicationWindow):
         for row in list(self.list_box):
             self.list_box.remove(row)
 
-        folder_contents = self.pass_manager.list_passwords(folder)
+        folder_contents = self.pass_manager.process_passwords_tree(folder)
         for item in folder_contents:
             label = Gtk.Label(label=item)
             self.list_box.append(label)
@@ -200,7 +147,7 @@ class PasswordApp(Gtk.ApplicationWindow):
         selected_item = row.get_child().get_text()
         # Check if the selected item is a folder by listing its content
         item_path = self.current_folder + '/' + selected_item if self.current_folder != '.' else selected_item
-        sub_items = self.pass_manager.list_passwords(item_path)
+        sub_items = self.pass_manager.process_passwords_tree(item_path)
         if sub_items:
             # Navigate into the folder
             self.load_folder(item_path)
