@@ -178,6 +178,10 @@ class Window(Gtk.ApplicationWindow):
         self.current_folder = '.'
         self.load_folder(self.current_folder)
 
+    def on_back_button_clicked(self, button):
+        parent_folder = '/'.join(self.current_folder.split('/')[:-1]) if '/' in self.current_folder else '.'
+        self.load_folder(parent_folder)
+
     def on_search_button_clicked(self, button, _ = None):
         # Toggle search mode
         search_mode = not self.search_bar.get_search_mode()
@@ -241,13 +245,19 @@ class Window(Gtk.ApplicationWindow):
             self.show_password_dialog(password_content, item_path)
 
     def show_password_dialog(self, content, title):
-        dialog = Gtk.Dialog(transient_for=self, modal=True, title=title)
-        dialog.set_default_size(280, 250)
+        dialog = Dialog(self, title, content)
+        dialog.set_visible(True)
+
+
+class Dialog(Gtk.Dialog):
+    def __init__(self, parent, title, content):    
+        Gtk.Dialog.__init__(self, title=title, transient_for=parent, modal=True)
+        self.set_default_size(280, 250)
 
         # Header
         header_bar = Gtk.HeaderBar()
         header_bar.set_show_title_buttons(True)
-        dialog.set_titlebar(header_bar)
+        self.set_titlebar(header_bar)
 
         # Edit or view mode
         edit_button = Gtk.Button(label="✏")
@@ -314,12 +324,11 @@ class Window(Gtk.ApplicationWindow):
                 grid.attach(label_widget, 0, i, 2, 1)
 
         scrolled_window.set_child(grid)
-        dialog_box = dialog.get_child()
+        dialog_box = self.get_child()
         dialog_box.append(scrolled_window)
 
         # Connect the response signal and show the dialog
-        dialog.connect("response", lambda dlg, r: dlg.destroy())
-        dialog.set_visible(True)
+        self.connect("response", lambda dlg, r: dlg.destroy())
 
     def on_edit_button_clicked(self, button):
         print("edit mode")
@@ -333,10 +342,6 @@ class Window(Gtk.ApplicationWindow):
         clipboard = Gdk.Display.get_default().get_clipboard()
         text = label.get_label()
         clipboard.set(text)
-
-    def on_back_button_clicked(self, button):
-        parent_folder = '/'.join(self.current_folder.split('/')[:-1]) if '/' in self.current_folder else '.'
-        self.load_folder(parent_folder)
 
 
 class Application(Gtk.Application):
