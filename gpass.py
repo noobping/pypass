@@ -1,3 +1,5 @@
+#!/bin/python
+
 import configparser
 import os
 import re
@@ -134,11 +136,11 @@ class Dialog(Gtk.Dialog):
         header_bar.set_show_title_buttons(True)
         self.set_titlebar(header_bar)
 
-        # Edit or view mode
-        edit_button = Gtk.Button()
-        edit_button.set_icon_name("edit-symbolic")
-        edit_button.connect("clicked", self.on_edit_button_clicked)
-        header_bar.pack_start(edit_button)
+        # # Edit or view mode
+        # edit_button = Gtk.Button()
+        # edit_button.set_icon_name("edit-symbolic")
+        # edit_button.connect("clicked", self.on_edit_button_clicked)
+        # header_bar.pack_start(edit_button)
 
         # Create a scrolled window
         scrolled_window = Gtk.ScrolledWindow()
