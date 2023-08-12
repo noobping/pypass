@@ -12,9 +12,12 @@ from gi.repository import Gdk, GdkWayland, Gtk
 
 
 class ConfigManager:
-    def __init__(self, file_path='config.ini'):
+    def __init__(self, file_name='gpass.ini', app_name='gpass'):
         self.config = configparser.ConfigParser()
-        self.file_path = file_path
+        config_path = os.path.expanduser(f'~/.config/{app_name}')
+        if not os.path.exists(config_path):
+            os.makedirs(config_path)
+        self.file_path = os.path.join(config_path, file_name)
         if not os.path.exists(self.file_path):
             self.create_default_config()
         self.load_config()
