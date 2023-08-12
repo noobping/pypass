@@ -25,7 +25,8 @@ class ConfigManager:
     def create_default_config(self):
         self.config['Settings'] = {
             'password_store_path': '~/.password-store',
-            'filter_valid_files': 'True'
+            'filter_valid_files': 'False',
+            'auto_sync': 'False'
         }
         self.save()
 
@@ -46,9 +47,10 @@ class ConfigManager:
 
 
 class PassWrapper:
-    def __init__(self, config_manager = ConfigManager()):
+    def __init__(self, config_manager):
         self.password_store_path = config_manager.get('Settings', 'password_store_path')
         self.filter_valid_files = config_manager.get('Settings', 'filter_valid_files').lower() == 'true'
+        self.auto_sync = config_manager.get('Settings', 'auto_sync').lower() == 'true'
 
     def list_passwords(self, folder='.', query=None):
         filter_valid_files = self.filter_valid_files
@@ -114,6 +116,13 @@ class PassWrapper:
         result = subprocess.run(['pass', 'otp', otp_uri], stdout=subprocess.PIPE)
         return result.stdout.decode().strip()
 
+    def sync(self):
+        if self.auto_sync:
+            subprocess.run(['pass', 'git', 'fetch'])
+            subprocess.run(['pass', 'git', 'pull'])
+        else:
+            print('Automatic syncing is disabled.')
+
 
 class Dialog(Gtk.Dialog):
     def __init__(self, parent, title, content):    
@@ -165,7 +174,7 @@ class Dialog(Gtk.Dialog):
         # Check for OTP and display it
         otp_line = next((line for line in lines[1:] if 'otpauth://' in line), None)
         if otp_line:
-            otp = parent.pass_manager.get_otp(title)
+            otp = parent.app.get_otp(title)
             label_text = Gtk.Label(label="OTP:")
             otp_label = Gtk.Label(label=otp)
             copy_button = Gtk.Button()
@@ -228,11 +237,10 @@ class Window(Gtk.ApplicationWindow):
 
     def __init__(self, application, **kwargs):
         super().__init__(application=application, **kwargs)
+        self.app = application.pass_manager
+
         self.set_default_size(300, 300)
         application.create_action('search', self.on_search_button_clicked, ['<primary>f'])
-
-        # Initialize PassWrapper
-        self.pass_manager = PassWrapper(application.config_manager)
 
         # Create a ListBox
         self.list_box = Gtk.ListBox()
@@ -321,7 +329,7 @@ class Window(Gtk.ApplicationWindow):
         for row in list(self.list_box):
             self.list_box.remove(row)
 
-        folder_contents = self.pass_manager.list_passwords(self.current_folder, query)
+        folder_contents = self.app.list_passwords(self.current_folder, query)
         for item in folder_contents:
             label = Gtk.Label(label=item)
             self.list_box.append(label)
@@ -339,7 +347,7 @@ class Window(Gtk.ApplicationWindow):
         for row in list(self.list_box):
             self.list_box.remove(row)
 
-        folder_contents = self.pass_manager.list_passwords(folder)
+        folder_contents = self.app.list_passwords(folder)
         for item in folder_contents:
             label = Gtk.Label(label=item)
             self.list_box.append(label)
@@ -348,13 +356,13 @@ class Window(Gtk.ApplicationWindow):
         selected_item = row.get_child().get_text()
         # Check if the selected item is a folder by listing its content
         item_path = self.current_folder + '/' + selected_item if self.current_folder != '.' else selected_item
-        sub_items = self.pass_manager.list_passwords(item_path)
+        sub_items = self.app.list_passwords(item_path)
         if sub_items:
             # Navigate into the folder
             self.load_folder(item_path)
         else:
             # Display the password content
-            password_content = self.pass_manager.show_password(item_path)
+            password_content = self.app.show_password(item_path)
             self.show_password_dialog(password_content, item_path)
 
     def show_password_dialog(self, content, title):
@@ -418,7 +426,10 @@ class Application(Gtk.Application):
         self.create_action('quit', lambda *_: self.quit(), ['<primary>q'])
         self.create_action('about', self.on_about_action, ['<primary>a'])
         self.create_action('preferences', self.on_preferences_action, ['<primary>p'])
+
+        # Initialize PassWrapper
         self.config_manager = ConfigManager()
+        self.pass_manager = PassWrapper(self.config_manager)
 
     def do_activate(self):
         """Called when the application is activated.
@@ -430,6 +441,7 @@ class Application(Gtk.Application):
         if not win:
             win = Window(application=self)
         win.present()
+        self.pass_manager.sync()
 
     def on_about_action(self, widget, _):
         """Callback for the app.about action."""
