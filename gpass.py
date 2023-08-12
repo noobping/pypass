@@ -111,6 +111,101 @@ class PassWrapper:
         return result.stdout.decode('utf-8') if result.returncode == 0 else None
 
 
+class Dialog(Gtk.Dialog):
+    def __init__(self, parent, title, content):    
+        Gtk.Dialog.__init__(self, title=title, transient_for=parent, modal=True)
+        self.set_default_size(280, 250)
+
+        # Header
+        header_bar = Gtk.HeaderBar()
+        header_bar.set_show_title_buttons(True)
+        self.set_titlebar(header_bar)
+
+        # Edit or view mode
+        edit_button = Gtk.Button(label="✏")
+        edit_button.connect("clicked", self.on_edit_button_clicked)
+        header_bar.pack_start(edit_button)
+
+        # Create a scrolled window
+        scrolled_window = Gtk.ScrolledWindow()
+        scrolled_window.set_vexpand(True)
+        scrolled_window.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+
+        # Create a grid layout
+        grid = Gtk.Grid()
+        grid.set_row_spacing(6)
+        grid.set_column_spacing(6)
+        grid.set_halign(Gtk.Align.CENTER)
+        grid.set_valign(Gtk.Align.CENTER)
+
+        # Split the content by lines
+        lines = content.split('\n')
+
+        # Handle the first line as the password
+        password_label = Gtk.Label(label=lines[0])
+        password_label.set_selectable(True)
+        password_label.set_wrap(True)
+        password_label.set_visible(False)
+        grid.attach(password_label, 0, 0, 2, 1)
+
+        # Show password
+        show_password_button = Gtk.Button(label="Show password")
+        show_password_button.connect("clicked", self.on_show_button_clicked, password_label)
+        grid.attach(show_password_button, 0, 0, 2, 1)
+
+        # Create the "Copy Password" button and connect it to the handler
+        copy_password_button = Gtk.Button(label="📋")
+        copy_password_button.connect("clicked", self.on_copy_button_clicked, password_label)
+        grid.attach(copy_password_button, 2, 0, 1, 1)
+
+        # Handle the rest of the lines
+        for i, line in enumerate(lines[1:], start=1):
+            # Check if the line follows the "label: value" pattern
+            if ':' in line:
+                label_text, value_text = line.split(':', 1)
+                label_widget = Gtk.Label(label=label_text.strip() + ':', halign=Gtk.Align.END)
+                value_widget = Gtk.Label(label=value_text.strip())
+                value_widget.set_selectable(True)
+                value_widget.set_wrap(True)
+                value_widget.set_visible(False)
+
+                show_button = Gtk.Button(label=f"Show {label_text.strip()}")
+                show_button.connect("clicked", self.on_show_button_clicked, value_widget)
+                grid.attach(show_button, 1, i, 1, 1)
+
+                copy_button = Gtk.Button(label="📋")
+                copy_button.connect("clicked", self.on_copy_button_clicked, value_widget)
+                grid.attach(copy_button, 2, i, 1, 1)
+
+                grid.attach(label_widget, 0, i, 1, 1)
+                grid.attach(value_widget, 1, i, 1, 1)
+            else:
+                label_widget = Gtk.Label(label=line)
+                label_widget.set_selectable(True)
+                label_widget.set_wrap(True)
+                grid.attach(label_widget, 0, i, 2, 1)
+
+        scrolled_window.set_child(grid)
+        dialog_box = self.get_child()
+        dialog_box.append(scrolled_window)
+
+        # Connect the response signal and show the dialog
+        self.connect("response", lambda dlg, r: dlg.destroy())
+
+    def on_edit_button_clicked(self, button):
+        print("edit mode")
+
+    def on_show_button_clicked(self, button, label):
+        value = not label.get_visible()
+        label.set_visible(value)
+        button.set_visible(not value)
+
+    def on_copy_button_clicked(self, button, label):
+        clipboard = Gdk.Display.get_default().get_clipboard()
+        text = label.get_label()
+        clipboard.set(text)
+
+
 class Window(Gtk.ApplicationWindow):
 
     def __init__(self, application, **kwargs):
@@ -247,101 +342,6 @@ class Window(Gtk.ApplicationWindow):
     def show_password_dialog(self, content, title):
         dialog = Dialog(self, title, content)
         dialog.set_visible(True)
-
-
-class Dialog(Gtk.Dialog):
-    def __init__(self, parent, title, content):    
-        Gtk.Dialog.__init__(self, title=title, transient_for=parent, modal=True)
-        self.set_default_size(280, 250)
-
-        # Header
-        header_bar = Gtk.HeaderBar()
-        header_bar.set_show_title_buttons(True)
-        self.set_titlebar(header_bar)
-
-        # Edit or view mode
-        edit_button = Gtk.Button(label="✏")
-        edit_button.connect("clicked", self.on_edit_button_clicked)
-        header_bar.pack_start(edit_button)
-
-        # Create a scrolled window
-        scrolled_window = Gtk.ScrolledWindow()
-        scrolled_window.set_vexpand(True)
-        scrolled_window.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
-
-        # Create a grid layout
-        grid = Gtk.Grid()
-        grid.set_row_spacing(6)
-        grid.set_column_spacing(6)
-        grid.set_halign(Gtk.Align.CENTER)
-        grid.set_valign(Gtk.Align.CENTER)
-
-        # Split the content by lines
-        lines = content.split('\n')
-
-        # Handle the first line as the password
-        password_label = Gtk.Label(label=lines[0])
-        password_label.set_selectable(True)
-        password_label.set_wrap(True)
-        password_label.set_visible(False)
-        grid.attach(password_label, 0, 0, 2, 1)
-
-        # Show password
-        show_password_button = Gtk.Button(label="Show password")
-        show_password_button.connect("clicked", self.on_show_button_clicked, password_label)
-        grid.attach(show_password_button, 0, 0, 2, 1)
-
-        # Create the "Copy Password" button and connect it to the handler
-        copy_password_button = Gtk.Button(label="📋")
-        copy_password_button.connect("clicked", self.on_copy_button_clicked, password_label)
-        grid.attach(copy_password_button, 2, 0, 1, 1)
-
-        # Handle the rest of the lines
-        for i, line in enumerate(lines[1:], start=1):
-            # Check if the line follows the "label: value" pattern
-            if ':' in line:
-                label_text, value_text = line.split(':', 1)
-                label_widget = Gtk.Label(label=label_text.strip() + ':', halign=Gtk.Align.END)
-                value_widget = Gtk.Label(label=value_text.strip())
-                value_widget.set_selectable(True)
-                value_widget.set_wrap(True)
-                value_widget.set_visible(False)
-
-                show_button = Gtk.Button(label=f"Show {label_text.strip()}")
-                show_button.connect("clicked", self.on_show_button_clicked, value_widget)
-                grid.attach(show_button, 1, i, 1, 1)
-
-                copy_button = Gtk.Button(label="📋")
-                copy_button.connect("clicked", self.on_copy_button_clicked, value_widget)
-                grid.attach(copy_button, 2, i, 1, 1)
-
-                grid.attach(label_widget, 0, i, 1, 1)
-                grid.attach(value_widget, 1, i, 1, 1)
-            else:
-                label_widget = Gtk.Label(label=line)
-                label_widget.set_selectable(True)
-                label_widget.set_wrap(True)
-                grid.attach(label_widget, 0, i, 2, 1)
-
-        scrolled_window.set_child(grid)
-        dialog_box = self.get_child()
-        dialog_box.append(scrolled_window)
-
-        # Connect the response signal and show the dialog
-        self.connect("response", lambda dlg, r: dlg.destroy())
-
-    def on_edit_button_clicked(self, button):
-        print("edit mode")
-
-    def on_show_button_clicked(self, button, label):
-        value = not label.get_visible()
-        label.set_visible(value)
-        button.set_visible(not value)
-
-    def on_copy_button_clicked(self, button, label):
-        clipboard = Gdk.Display.get_default().get_clipboard()
-        text = label.get_label()
-        clipboard.set(text)
 
 
 class Application(Gtk.Application):
