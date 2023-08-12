@@ -84,7 +84,7 @@ class PasswordApp(Gtk.ApplicationWindow):
         self.list_box.connect('row-activated', self.on_row_activated)
 
         # Create a back button
-        self.back_button = Gtk.Button(label="<")
+        self.back_button = Gtk.Button(label="←")
         self.back_button.connect('clicked', self.on_back_button_clicked)
 
         # Create a header bar
@@ -100,7 +100,6 @@ class PasswordApp(Gtk.ApplicationWindow):
         # Create the search bar and connect it to the search entry
         self.search_bar = Gtk.SearchBar()
         self.search_bar.set_child(self.search_entry)
-        self.search_bar.set_show_close_button(True)
         self.search_bar.connect_entry(self.search_entry)
 
         # Create a search button
@@ -131,6 +130,9 @@ class PasswordApp(Gtk.ApplicationWindow):
         # If search mode is active, grab focus to the search entry
         if search_mode:
             self.search_entry.grab_focus()
+            self.search_button.set_label("←")
+        else:
+            self.search_button.set_label("🔍")
 
     def on_search_entry_activate(self, entry):
         query = entry.get_text()
