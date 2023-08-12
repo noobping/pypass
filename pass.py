@@ -93,25 +93,43 @@ class PasswordApp(Gtk.ApplicationWindow):
         self.header_bar.pack_start(self.back_button)
         self.set_titlebar(self.header_bar)
 
-        # Create search button
+        # Create the search entry
+        self.search_entry = Gtk.SearchEntry()
+        self.search_entry.connect("activate", self.on_search_entry_activate)
+
+        # Create the search bar and connect it to the search entry
         self.search_bar = Gtk.SearchBar()
-        self.search_bar.set_visible(True)
-        self.set_child(self.search_bar)
-        # self.search_entry = Gtk.Entry()
-        # self.search_button = Gtk.Button(label="Search")
-        # self.search_button.connect("clicked", self.on_search_clicked)
+        self.search_bar.set_child(self.search_entry)
+        self.search_bar.set_show_close_button(True)
+        self.search_bar.connect_entry(self.search_entry)
+        self.search_bar.set_search_mode(True)
 
         # Create a scrolled window
         self.scrolled_window = Gtk.ScrolledWindow()
         self.scrolled_window.set_child(self.list_box)
-        self.set_child(self.scrolled_window)
+        
+        # Create a vertical box and pack the search bar and scrolled window into it
+        self.vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+        self.vbox.append(self.search_bar)
+        self.vbox.append(self.scrolled_window)
+        self.scrolled_window.set_vexpand(True)
+        self.set_child(self.vbox)
 
         # Initial folder
         self.current_folder = '.'
         self.load_folder(self.current_folder)
 
     def on_search_clicked(self, button):
-        query = self.search_entry.get_text()
+        # Toggle search mode
+        search_mode = not self.search_bar.get_search_mode()
+        self.search_bar.set_search_mode(search_mode)
+
+        # If search mode is active, grab focus to the search entry
+        if search_mode:
+            self.search_entry.grab_focus()
+
+    def on_search_entry_activate(self, entry):
+        query = entry.get_text()
         self.current_folder = '.'
 
         self.set_title('Password Search')
