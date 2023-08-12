@@ -109,6 +109,11 @@ class PassWrapper:
         result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         return result.stdout.decode('utf-8') if result.returncode == 0 else None
 
+    def get_otp(self, otp_uri):
+        # Run the pass otp command and return the result
+        result = subprocess.run(['pass', 'otp', otp_uri], stdout=subprocess.PIPE)
+        return result.stdout.decode().strip()
+
 
 class Dialog(Gtk.Dialog):
     def __init__(self, parent, title, content):    
@@ -161,8 +166,19 @@ class Dialog(Gtk.Dialog):
 
         # Handle the rest of the lines
         for i, line in enumerate(lines[1:], start=1):
-            # Check if the line follows the "label: value" pattern
-            if ':' in line:
+            if 'otpauth://' in line:
+                # This line contains an OTP URI
+                otp = parent.pass_manager.get_otp(title)
+                label_text = Gtk.Label(label="OTP:")
+                otp_label = Gtk.Label(label=otp)
+                copy_button = Gtk.Button()
+                copy_button.set_icon_name("edit-copy-symbolic")
+                copy_button.connect("clicked", self.on_copy_button_clicked, otp_label)
+                grid.attach(label_text, 0, i, 1, 1)
+                grid.attach(otp_label, 1, i, 1, 1)
+                grid.attach(copy_button, 2, i, 1, 1)
+            elif ':' in line:
+                # Check if the line follows the "label: value" pattern
                 label_text, value_text = line.split(':', 1)
                 label_widget = Gtk.Label(label=label_text.strip() + ':', halign=Gtk.Align.END)
                 value_widget = Gtk.Label(label=value_text.strip())
