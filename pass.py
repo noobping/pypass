@@ -90,10 +90,10 @@ class PasswordApp(Gtk.ApplicationWindow):
         self.back_button.connect('clicked', self.on_back_button_clicked)
 
         # Create a header bar
-        self.header_bar = Gtk.HeaderBar()
-        self.header_bar.set_show_title_buttons(True)
-        self.header_bar.pack_start(self.back_button)
-        self.set_titlebar(self.header_bar)
+        header_bar = Gtk.HeaderBar()
+        header_bar.set_show_title_buttons(True)
+        header_bar.pack_start(self.back_button)
+        self.set_titlebar(header_bar)
 
         # Create the search entry
         self.search_entry = Gtk.SearchEntry()
@@ -107,18 +107,18 @@ class PasswordApp(Gtk.ApplicationWindow):
         # Create a search button
         self.search_button = Gtk.Button(label="🔍")
         self.search_button.connect('clicked', self.on_search_button_clicked)
-        self.header_bar.pack_start(self.search_button)
+        header_bar.pack_start(self.search_button)
 
         # Create a scrolled window
-        self.scrolled_window = Gtk.ScrolledWindow()
-        self.scrolled_window.set_child(self.list_box)
+        scrolled_window = Gtk.ScrolledWindow()
+        scrolled_window.set_child(self.list_box)
         
         # Create a vertical box and pack the search bar and scrolled window into it
-        self.vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
-        self.vbox.append(self.search_bar)
-        self.vbox.append(self.scrolled_window)
-        self.scrolled_window.set_vexpand(True)
-        self.set_child(self.vbox)
+        vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+        vbox.append(self.search_bar)
+        vbox.append(scrolled_window)
+        scrolled_window.set_vexpand(True)
+        self.set_child(vbox)
 
         # Initial folder
         self.current_folder = '.'
