@@ -359,6 +359,8 @@ class Preferences(Gtk.Dialog):
         path_label = Gtk.Label(label="Password Store Path:")
         self.path_entry = Gtk.Entry()
         self.path_entry.set_text(self.config_manager.get('Settings', 'password_store_path'))
+        self.path_entry.connect("changed", self.save_preferences)
+
         path_box.append(path_label)
         path_box.append(self.path_entry)
         path_row.set_child(path_box)
@@ -372,6 +374,7 @@ class Preferences(Gtk.Dialog):
         switch_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
         self.filter_switch = Gtk.Switch()
         self.filter_switch.set_active(self.config_manager.get('Settings', 'filter_valid_files') == 'True')
+        self.filter_switch.connect("state-set", self.save_preferences)
         switch_box.prepend(self.filter_switch)
 
         filter_box.append(filter_label)
@@ -381,7 +384,7 @@ class Preferences(Gtk.Dialog):
         list_box.append(filter_row)
         box.append(list_box)
 
-    def save_preferences(self):
+    def save_preferences(self, *args):
         self.config_manager.set('Settings', 'password_store_path', self.path_entry.get_text())
         self.config_manager.set('Settings', 'filter_valid_files', str(self.filter_switch.get_active()))
         self.config_manager.save()
