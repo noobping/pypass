@@ -188,27 +188,49 @@ class PasswordApp(Gtk.ApplicationWindow):
         dialog = Gtk.Dialog(transient_for=self, modal=True, title=title)
         dialog.set_default_size(300, 200)
 
-        # Create a label to display the content
-        label = Gtk.Label(label=content)
-        label.set_selectable(True)  # Allow text selection
-        label.set_wrap(True)  # Enable text wrapping
-        label.set_margin_top(10)
-        label.set_margin_bottom(10)
-        label.set_margin_start(10)
-        label.set_margin_end(10)
-
-        # Create a scrolled window and set the label as its child
+        # Create a scrolled window
         scrolled_window = Gtk.ScrolledWindow()
+        scrolled_window.set_vexpand(True)
         scrolled_window.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
-        scrolled_window.set_child(label)  # Use set_child instead of add
 
-        # Add the scrolled window to the dialog's content
+        # Create a grid layout
+        grid = Gtk.Grid()
+        grid.set_row_spacing(6)
+        grid.set_column_spacing(6)
+
+        # Split the content by lines
+        lines = content.split('\n')
+
+        # Handle the first line as the password
+        password_label = Gtk.Label(label=lines[0])
+        password_label.set_selectable(True)
+        password_label.set_wrap(True)
+        grid.attach(password_label, 0, 0, 2, 1)
+
+        # Handle the rest of the lines
+        for i, line in enumerate(lines[1:], start=1):
+            # Check if the line follows the "label: value" pattern
+            if ':' in line:
+                label_text, value_text = line.split(':', 1)
+                label_widget = Gtk.Label(label=label_text.strip() + ':', halign=Gtk.Align.END)
+                value_widget = Gtk.Label(label=value_text.strip())
+                value_widget.set_selectable(True)
+                value_widget.set_wrap(True)
+                grid.attach(label_widget, 0, i, 1, 1)
+                grid.attach(value_widget, 1, i, 1, 1)
+            else:
+                label_widget = Gtk.Label(label=line)
+                label_widget.set_selectable(True)
+                label_widget.set_wrap(True)
+                grid.attach(label_widget, 0, i, 2, 1)
+
+        scrolled_window.set_child(grid)
         dialog_box = dialog.get_child()
         dialog_box.append(scrolled_window)
 
         # Connect the response signal and show the dialog
         dialog.connect("response", lambda dlg, r: dlg.destroy())
-        dialog.show()
+        dialog.set_visible(True)
 
     def on_back_button_clicked(self, button):
         parent_folder = '/'.join(self.current_folder.split('/')[:-1]) if '/' in self.current_folder else '.'
