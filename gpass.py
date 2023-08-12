@@ -113,9 +113,10 @@ class PassWrapper:
 
 class Window(Gtk.ApplicationWindow):
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.set_default_size(400, 300)
+    def __init__(self, application, **kwargs):
+        super().__init__(application=application, **kwargs)
+        self.set_default_size(300, 300)
+        application.create_action('search', self.on_search_button_clicked, ['<primary>f'])
 
         # Initialize PassWrapper
         self.pass_manager = PassWrapper()
@@ -177,7 +178,7 @@ class Window(Gtk.ApplicationWindow):
         self.current_folder = '.'
         self.load_folder(self.current_folder)
 
-    def on_search_button_clicked(self, button):
+    def on_search_button_clicked(self, button, _ = None):
         # Toggle search mode
         search_mode = not self.search_bar.get_search_mode()
         self.search_bar.set_search_mode(search_mode)
