@@ -153,31 +153,31 @@ class Dialog(Gtk.Dialog):
         password_label.set_visible(False)
         grid.attach(password_label, 0, 0, 2, 1)
 
-        # Show password
         show_password_button = Gtk.Button(label="Show password")
         show_password_button.connect("clicked", self.on_show_button_clicked, password_label)
         grid.attach(show_password_button, 0, 0, 2, 1)
 
-        # Create the "Copy Password" button and connect it to the handler
         copy_password_button = Gtk.Button()
         copy_password_button.set_icon_name("edit-copy-symbolic")
         copy_password_button.connect("clicked", self.on_copy_button_clicked, password_label)
         grid.attach(copy_password_button, 2, 0, 1, 1)
 
-        # Handle the rest of the lines
-        for i, line in enumerate(lines[1:], start=1):
-            if 'otpauth://' in line:
-                # This line contains an OTP URI
-                otp = parent.pass_manager.get_otp(title)
-                label_text = Gtk.Label(label="OTP:")
-                otp_label = Gtk.Label(label=otp)
-                copy_button = Gtk.Button()
-                copy_button.set_icon_name("edit-copy-symbolic")
-                copy_button.connect("clicked", self.on_copy_button_clicked, otp_label)
-                grid.attach(label_text, 0, i, 1, 1)
-                grid.attach(otp_label, 1, i, 1, 1)
-                grid.attach(copy_button, 2, i, 1, 1)
-            elif ':' in line:
+        # Check for OTP and display it
+        otp_line = next((line for line in lines[1:] if 'otpauth://' in line), None)
+        if otp_line:
+            otp = parent.pass_manager.get_otp(title)
+            label_text = Gtk.Label(label="OTP:")
+            otp_label = Gtk.Label(label=otp)
+            copy_button = Gtk.Button()
+            copy_button.set_icon_name("edit-copy-symbolic")
+            copy_button.connect("clicked", self.on_copy_button_clicked, otp_label)
+            grid.attach(label_text, 0, 1, 1, 1)  # Adjust the row index here
+            grid.attach(otp_label, 1, 1, 1, 1)   # Adjust the row index here
+            grid.attach(copy_button, 2, 1, 1, 1) # Adjust the row index here
+
+        # Handle the rest of the lines (excluding the OTP line)
+        for i, line in enumerate((line for line in lines[1:] if line != otp_line), start=2):
+            if ':' in line:
                 # Check if the line follows the "label: value" pattern
                 label_text, value_text = line.split(':', 1)
                 label_widget = Gtk.Label(label=label_text.strip() + ':', halign=Gtk.Align.END)
