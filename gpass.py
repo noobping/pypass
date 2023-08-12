@@ -46,10 +46,9 @@ class ConfigManager:
 
 
 class PassWrapper:
-    def __init__(self):
-        self.config_manager = ConfigManager()
-        self.password_store_path = self.config_manager.get('Settings', 'password_store_path')
-        self.filter_valid_files = self.config_manager.get('Settings', 'filter_valid_files').lower() == 'true'
+    def __init__(self, config_manager = ConfigManager()):
+        self.password_store_path = config_manager.get('Settings', 'password_store_path')
+        self.filter_valid_files = config_manager.get('Settings', 'filter_valid_files').lower() == 'true'
 
     def list_passwords(self, folder='.', query=None):
         filter_valid_files = self.filter_valid_files
@@ -214,7 +213,7 @@ class Window(Gtk.ApplicationWindow):
         application.create_action('search', self.on_search_button_clicked, ['<primary>f'])
 
         # Initialize PassWrapper
-        self.pass_manager = PassWrapper()
+        self.pass_manager = PassWrapper(application.config_manager)
 
         # Create a ListBox
         self.list_box = Gtk.ListBox()
@@ -344,6 +343,50 @@ class Window(Gtk.ApplicationWindow):
         dialog.set_visible(True)
 
 
+class Preferences(Gtk.Dialog):
+    def __init__(self, parent, config_manager):
+        Gtk.Dialog.__init__(self, title="Preferences", transient_for=parent, modal=True)
+        self.config_manager = config_manager
+
+        # Get the content area directly
+        box = self.get_child()
+        list_box = Gtk.ListBox()
+        list_box.set_selection_mode(Gtk.SelectionMode.NONE)
+
+        # Password Store Path
+        path_row = Gtk.ListBoxRow()
+        path_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
+        path_label = Gtk.Label(label="Password Store Path:")
+        self.path_entry = Gtk.Entry()
+        self.path_entry.set_text(self.config_manager.get('Settings', 'password_store_path'))
+        path_box.append(path_label)
+        path_box.append(self.path_entry)
+        path_row.set_child(path_box)
+        list_box.append(path_row)
+
+        # Filter Valid Files
+        filter_row = Gtk.ListBoxRow()
+        filter_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+        filter_label = Gtk.Label(label="Filter Valid Files:")
+
+        switch_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        self.filter_switch = Gtk.Switch()
+        self.filter_switch.set_active(self.config_manager.get('Settings', 'filter_valid_files') == 'True')
+        switch_box.prepend(self.filter_switch)
+
+        filter_box.append(filter_label)
+        filter_box.append(switch_box)
+        filter_row.set_child(filter_box)
+
+        list_box.append(filter_row)
+        box.append(list_box)
+
+    def save_preferences(self):
+        self.config_manager.set('Settings', 'password_store_path', self.path_entry.get_text())
+        self.config_manager.set('Settings', 'filter_valid_files', str(self.filter_switch.get_active()))
+        self.config_manager.save()
+
+
 class Application(Gtk.Application):
     """The main application singleton class."""
 
@@ -353,6 +396,7 @@ class Application(Gtk.Application):
         self.create_action('quit', lambda *_: self.quit(), ['<primary>q'])
         self.create_action('about', self.on_about_action, ['<primary>a'])
         self.create_action('preferences', self.on_preferences_action, ['<primary>p'])
+        self.config_manager = ConfigManager()
 
     def do_activate(self):
         """Called when the application is activated.
@@ -380,8 +424,8 @@ class Application(Gtk.Application):
         about.present()
 
     def on_preferences_action(self, widget, _):
-        """Callback for the app.preferences action."""
-        print('app.preferences action activated')
+        dialog = Preferences(self.props.active_window, self.config_manager)
+        dialog.set_visible(True)
 
     def create_action(self, name, callback, shortcuts=None):
         """Add an application action.
