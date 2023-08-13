@@ -51,11 +51,41 @@ class ConfigManager:
 
 class PassWrapper:
     def __init__(self, config_manager):
-        self.password_store_path = config_manager.get('Settings', 'password_store_path')
+        self.password_store_path = os.path.expanduser(config_manager.get('Settings', 'password_store_path'))
         self.filter_valid_files = config_manager.get('Settings', 'filter_valid_files').lower() == 'true'
         self.auto_sync = config_manager.get('Settings', 'auto_sync').lower() == 'true'
 
-    def list_passwords(self, folder='.', query=None):
+    def list_files(self, folder=".", query=None) -> [str]:
+        if folder == '.':
+            root_folder = self.password_store_path
+        else:
+            root_folder = os.path.join(self.password_store_path, folder.lstrip('.'))
+        matching_files = []
+
+        # Check if the query is provided
+        if query:
+            # Split the keywords string into individual keywords
+            keywords = query.split()
+        else:
+            # If no query, set keywords to None
+            keywords = None
+
+        # Walk through the directory and its subdirectories
+        for root, _, files in os.walk(root_folder):
+            for filename in files:
+                # Check if the file has a .gpg extension
+                if filename.endswith('.gpg'):
+                    # If keywords are provided, check if any of the keywords are in the filename
+                    if keywords is None or any(keyword in filename for keyword in keywords):
+                        # Remove the .gpg extension
+                        filename_without_extension = os.path.splitext(filename)[0]
+
+                        # Add the relative path of the matching file (excluding the root directory)
+                        relative_path = os.path.relpath(os.path.join(root, filename_without_extension), root_folder)
+                        matching_files.append(relative_path)
+        return matching_files
+
+    def list_passwords(self, folder='.', query=None) -> [str]:
         filter_valid_files = self.filter_valid_files
 
         if query:
@@ -76,7 +106,6 @@ class PassWrapper:
         children = []
         current_indent = None
         current_path = []
-        password_store_path = os.path.expanduser('~/.password-store') # Default password store path
         for line in lines:
             stripped_line = line.lstrip()
             indent = len(line) - len(stripped_line)
@@ -85,9 +114,9 @@ class PassWrapper:
             if indent == current_indent and (stripped_line.startswith("├──") or stripped_line.startswith("└──")):
                 item_name = stripped_line.replace("├──", "").replace("└──", "").strip()
                 if folder != '.':
-                    item_path = os.path.join(password_store_path, folder.lstrip('.'), item_name)
+                    item_path = os.path.join(self.password_store_path, folder.lstrip('.'), item_name)
                 else:
-                    item_path = os.path.join(password_store_path, item_name)
+                    item_path = os.path.join(self.password_store_path, item_name)
                     
                 if filter_valid_files:
                     file_command = ['file', item_path]
@@ -109,17 +138,17 @@ class PassWrapper:
                 
         return children
 
-    def show_password(self, path):
+    def show_password(self, path) -> str | None:
         command = ['pass', 'show', path]
         result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         return result.stdout.decode('utf-8') if result.returncode == 0 else None
 
-    def get_otp(self, otp_uri):
+    def get_otp(self, otp_uri) -> str:
         # Run the pass otp command and return the result
         result = subprocess.run(['pass', 'otp', otp_uri], stdout=subprocess.PIPE)
         return result.stdout.decode().strip()
 
-    def sync(self):
+    def sync(self) -> None:
         if self.auto_sync:
             subprocess.run(['pass', 'git', 'fetch'])
             subprocess.run(['pass', 'git', 'pull'])
@@ -181,7 +210,7 @@ class Dialog(Gtk.Dialog):
         # Check for OTP and display it
         otp_line = next((line for line in lines[1:] if 'otpauth://' in line), None)
         if otp_line:
-            otp = parent.app.get_otp(title)
+            otp = parent.pass_manager.get_otp(title)
             label_text = Gtk.Label(label="OTP:")
             otp_label = Gtk.Label(label=otp)
             copy_button = Gtk.Button()
@@ -242,9 +271,10 @@ class Dialog(Gtk.Dialog):
 
 class Window(Gtk.ApplicationWindow):
 
-    def __init__(self, application, **kwargs):
+    def __init__(self, pass_manager, config_manager, application, **kwargs):
         super().__init__(application=application, **kwargs)
-        self.app = application.pass_manager
+        self.pass_manager = pass_manager
+        self.config_manager = config_manager
 
         self.set_default_size(300, 300)
         application.create_action('search', self.on_search_button_clicked, ['<primary>f'])
@@ -336,7 +366,12 @@ class Window(Gtk.ApplicationWindow):
         for row in list(self.list_box):
             self.list_box.remove(row)
 
-        folder_contents = self.app.list_passwords(self.current_folder, query)
+        use_folder = self.config_manager.get('Settings', 'use_folder').lower() == 'true'
+        if use_folder:
+            folder_contents = self.pass_manager.list_files(self.current_folder, query)
+        else:
+            folder_contents = self.pass_manager.list_passwords(self.current_folder, query)
+
         for item in folder_contents:
             label = Gtk.Label(label=item)
             self.list_box.append(label)
@@ -354,7 +389,7 @@ class Window(Gtk.ApplicationWindow):
         for row in list(self.list_box):
             self.list_box.remove(row)
 
-        folder_contents = self.app.list_passwords(folder)
+        folder_contents = self.pass_manager.list_passwords(folder)
         for item in folder_contents:
             label = Gtk.Label(label=item)
             self.list_box.append(label)
@@ -363,13 +398,13 @@ class Window(Gtk.ApplicationWindow):
         selected_item = row.get_child().get_text()
         # Check if the selected item is a folder by listing its content
         item_path = self.current_folder + '/' + selected_item if self.current_folder != '.' else selected_item
-        sub_items = self.app.list_passwords(item_path)
+        sub_items = self.pass_manager.list_passwords(item_path)
         if sub_items:
             # Navigate into the folder
             self.load_folder(item_path)
         else:
             # Display the password content
-            password_content = self.app.show_password(item_path)
+            password_content = self.pass_manager.show_password(item_path)
             self.show_password_dialog(password_content, item_path)
 
     def show_password_dialog(self, content, title):
@@ -430,17 +465,17 @@ class Preferences(Gtk.Dialog):
         self.sync_switch.connect("state-set", self.save_preferences)
         grid.attach(self.sync_switch, 2, 3, 2, 1)
 
-        # # Use filesystem instead of pass
-        # logo4 = Gtk.Image.new_from_icon_name("folder-symbolic")
-        # grid.attach(logo4, 0, 4, 1, 1)
+        # Use filesystem instead of pass
+        logo4 = Gtk.Image.new_from_icon_name("folder-symbolic")
+        grid.attach(logo4, 0, 4, 1, 1)
 
-        # folder_label = Gtk.Label(label="Use Password Store folder:")
-        # grid.attach(folder_label, 1, 4, 1, 1)
+        folder_label = Gtk.Label(label="Use Password Store folder:")
+        grid.attach(folder_label, 1, 4, 1, 1)
 
-        # self.folder_switch = Gtk.Switch()
-        # self.folder_switch.set_active(self.config_manager.get('Settings', 'use_folder') == 'True')
-        # self.folder_switch.connect("state-set", self.save_preferences)
-        # grid.attach(self.folder_switch, 2, 4, 2, 1)
+        self.folder_switch = Gtk.Switch()
+        self.folder_switch.set_active(self.config_manager.get('Settings', 'use_folder') == 'True')
+        self.folder_switch.connect("state-set", self.save_preferences)
+        grid.attach(self.folder_switch, 2, 4, 2, 1)
 
         box.append(grid)
 
@@ -474,7 +509,7 @@ class Application(Gtk.Application):
         """
         win = self.props.active_window
         if not win:
-            win = Window(application=self)
+            win = Window(pass_manager=self.pass_manager, config_manager=self.config_manager, application=self)
         win.present()
         self.pass_manager.sync()
 
