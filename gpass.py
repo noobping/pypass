@@ -28,7 +28,8 @@ class ConfigManager:
         self.config['Settings'] = {
             'password_store_path': '~/.password-store',
             'filter_valid_files': 'False',
-            'auto_sync': 'False'
+            'auto_sync': 'False',
+            'use_folder': 'False',
         }
         self.save()
 
@@ -429,11 +430,25 @@ class Preferences(Gtk.Dialog):
         self.sync_switch.connect("state-set", self.save_preferences)
         grid.attach(self.sync_switch, 2, 3, 2, 1)
 
+        # # Use filesystem instead of pass
+        # logo4 = Gtk.Image.new_from_icon_name("folder-symbolic")
+        # grid.attach(logo4, 0, 4, 1, 1)
+
+        # folder_label = Gtk.Label(label="Use Password Store folder:")
+        # grid.attach(folder_label, 1, 4, 1, 1)
+
+        # self.folder_switch = Gtk.Switch()
+        # self.folder_switch.set_active(self.config_manager.get('Settings', 'use_folder') == 'True')
+        # self.folder_switch.connect("state-set", self.save_preferences)
+        # grid.attach(self.folder_switch, 2, 4, 2, 1)
+
         box.append(grid)
 
     def save_preferences(self, *args):
         self.config_manager.set('Settings', 'password_store_path', self.path_entry.get_text())
         self.config_manager.set('Settings', 'filter_valid_files', str(self.filter_switch.get_active()))
+        self.config_manager.set('Settings', 'auto_sync', str(self.sync_switch.get_active()))
+        self.config_manager.set('Settings', 'use_folder', str(self.folder_switch.get_active()))
         self.config_manager.save()
 
 
