@@ -444,7 +444,7 @@ class Preferences(Gtk.Dialog):
         logo2 = Gtk.Image.new_from_icon_name("security-medium-symbolic")
         grid.attach(logo2, 0, 2, 1, 1)
 
-        filter_label = Gtk.Label(label="Filter Valid Files:")
+        filter_label = Gtk.Label(label="Hide invalid files:")
         grid.attach(filter_label, 1, 2, 1, 1)
 
         self.filter_switch = Gtk.Switch()
