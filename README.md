@@ -1,5 +1,5 @@
 # pypass
-A GTK4 frontend for Password Store
+A GTK4 frontend for [Password Store](https://www.passwordstore.org/) written in python
 
 ![demo](demo.gif)
 
@@ -13,5 +13,6 @@ A GTK4 frontend for Password Store
 
 ## TODO
  - [ ] Integrate Gnome search
- - [ ] Edit password
+ - [ ] Password editing functionality
  - [ ] Move project to Gnome builder
+ - [ ] ...
