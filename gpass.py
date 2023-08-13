@@ -182,9 +182,9 @@ class Dialog(Gtk.Dialog):
             copy_button = Gtk.Button()
             copy_button.set_icon_name("edit-copy-symbolic")
             copy_button.connect("clicked", self.on_copy_button_clicked, otp_label)
-            grid.attach(label_text, 0, 1, 1, 1)  # Adjust the row index here
-            grid.attach(otp_label, 1, 1, 1, 1)   # Adjust the row index here
-            grid.attach(copy_button, 2, 1, 1, 1) # Adjust the row index here
+            grid.attach(label_text,  0, 1, 1, 1)
+            grid.attach(otp_label,   1, 1, 1, 1)
+            grid.attach(copy_button, 2, 1, 1, 1)
 
         # Handle the rest of the lines (excluding the OTP line)
         for i, line in enumerate((line for line in lines[1:] if line != otp_line), start=2):
@@ -379,39 +379,37 @@ class Preferences(Gtk.Dialog):
 
         # Get the content area directly
         box = self.get_child()
-        list_box = Gtk.ListBox()
-        list_box.set_selection_mode(Gtk.SelectionMode.NONE)
+        grid = Gtk.Grid()
+        grid.set_row_spacing(6)
+        grid.set_column_spacing(6)
+        grid.set_halign(Gtk.Align.CENTER)
+        grid.set_valign(Gtk.Align.CENTER)
 
         # Password Store Path
-        path_row = Gtk.ListBoxRow()
-        path_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
+        logo1 = Gtk.Image.new_from_icon_name("folder-symbolic")
+        grid.attach(logo1, 0, 0, 1, 1)
+
         path_label = Gtk.Label(label="Password Store Path:")
+        grid.attach(path_label, 1, 0, 1, 1)
+
         self.path_entry = Gtk.Entry()
         self.path_entry.set_text(self.config_manager.get('Settings', 'password_store_path'))
         self.path_entry.connect("changed", self.save_preferences)
-
-        path_box.append(path_label)
-        path_box.append(self.path_entry)
-        path_row.set_child(path_box)
-        list_box.append(path_row)
+        grid.attach(self.path_entry, 0, 1, 6, 1)
 
         # Filter Valid Files
-        filter_row = Gtk.ListBoxRow()
-        filter_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
-        filter_label = Gtk.Label(label="Filter Valid Files:")
+        logo2 = Gtk.Image.new_from_icon_name("security-medium-symbolic")
+        grid.attach(logo2, 0, 2, 1, 1)
 
-        switch_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        filter_label = Gtk.Label(label="Filter Valid Files:")
+        grid.attach(filter_label, 1, 2, 1, 1)
+
         self.filter_switch = Gtk.Switch()
         self.filter_switch.set_active(self.config_manager.get('Settings', 'filter_valid_files') == 'True')
         self.filter_switch.connect("state-set", self.save_preferences)
-        switch_box.prepend(self.filter_switch)
+        grid.attach(self.filter_switch, 2, 2, 2, 1)
 
-        filter_box.append(filter_label)
-        filter_box.append(switch_box)
-        filter_row.set_child(filter_box)
-
-        list_box.append(filter_row)
-        box.append(list_box)
+        box.append(grid)
 
     def save_preferences(self, *args):
         self.config_manager.set('Settings', 'password_store_path', self.path_entry.get_text())
