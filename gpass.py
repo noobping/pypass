@@ -153,6 +153,10 @@ class Dialog(Gtk.Dialog):
         grid.set_column_spacing(6)
         grid.set_halign(Gtk.Align.CENTER)
         grid.set_valign(Gtk.Align.CENTER)
+        grid.set_margin_start(6)
+        grid.set_margin_end(6)
+        grid.set_margin_top(6)
+        grid.set_margin_bottom(6)
 
         # Split the content by lines
         lines = content.split('\n')
@@ -384,6 +388,10 @@ class Preferences(Gtk.Dialog):
         grid.set_column_spacing(6)
         grid.set_halign(Gtk.Align.CENTER)
         grid.set_valign(Gtk.Align.CENTER)
+        grid.set_margin_start(6)
+        grid.set_margin_end(6)
+        grid.set_margin_top(6)
+        grid.set_margin_bottom(6)
 
         # Password Store Path
         logo1 = Gtk.Image.new_from_icon_name("folder-symbolic")
@@ -408,6 +416,18 @@ class Preferences(Gtk.Dialog):
         self.filter_switch.set_active(self.config_manager.get('Settings', 'filter_valid_files') == 'True')
         self.filter_switch.connect("state-set", self.save_preferences)
         grid.attach(self.filter_switch, 2, 2, 2, 1)
+
+        # auto sync
+        logo3 = Gtk.Image.new_from_icon_name("git-symbolic")
+        grid.attach(logo3, 0, 3, 1, 1)
+
+        sync_label = Gtk.Label(label="automatically synchronize:")
+        grid.attach(sync_label, 1, 3, 1, 1)
+
+        self.sync_switch = Gtk.Switch()
+        self.sync_switch.set_active(self.config_manager.get('Settings', 'auto_sync') == 'True')
+        self.sync_switch.connect("state-set", self.save_preferences)
+        grid.attach(self.sync_switch, 2, 3, 2, 1)
 
         box.append(grid)
 
