@@ -1,7 +1,7 @@
 pkgname=pypass
 pkgver=0.1.0
 pkgrel=1
-pkgdesc="A GTK4 frontend for Password Store"
+pkgdesc="A GTK4 frontend for Password Store written in python"
 arch=('any')
 url="https://github.com/noobping/pypass"
 license=('GPL')
@@ -14,7 +14,7 @@ source=(
 )
 sha256sums=(
   '34025f2e0a828a3ea23ea88fe20e614829b31f6a21ec801fb95a109ec266865a'
-  '5982ce67369673f0238402828d005acc00790c951887bd000f0684165287ea10'
+  'd0a003221ea5b2be46476ef9c174671c03576337fffee8556fddb35d78bd0db2'
   '4f37dfdd3f13dd34183c5397cad60b896c0848624129949ead8508395b229162'
 )
 
