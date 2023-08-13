@@ -465,10 +465,10 @@ class Preferences(Gtk.Dialog):
         grid.attach(self.sync_switch, 2, 3, 2, 1)
 
         # Use filesystem instead of pass
-        logo4 = Gtk.Image.new_from_icon_name("folder-symbolic")
+        logo4 = Gtk.Image.new_from_icon_name("edit-find-symbolic")
         grid.attach(logo4, 0, 4, 1, 1)
 
-        folder_label = Gtk.Label(label="Use Password Store folder:")
+        folder_label = Gtk.Label(label="Use improved search:")
         grid.attach(folder_label, 1, 4, 1, 1)
 
         self.folder_switch = Gtk.Switch()
