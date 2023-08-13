@@ -10,7 +10,7 @@ import gi
 gi.require_version('Gdk', '4.0')
 gi.require_version('GdkWayland', '4.0')
 gi.require_version('Gtk', '4.0')
-from gi.repository import Gdk, GdkWayland, Gtk, Gio, GdkPixbuf
+from gi.repository import Gdk, GdkWayland, Gtk, Gio
 
 
 class ConfigManager:
@@ -447,12 +447,10 @@ class Application(Gtk.Application):
 
     def on_about_action(self, widget, _):
         """Callback for the app.about action."""
-        pixbuf = GdkPixbuf.Pixbuf.new_from_file("gpass.svg")
-        logo = Gdk.Texture.new_for_pixbuf(pixbuf)
         about = Gtk.AboutDialog(transient_for=self.props.active_window,
                                 modal=True,
                                 program_name='Password Store',
-                                logo=logo,
+                                logo_icon_name='com.github.noobping.gpass',
                                 version='0.1.0',
                                 license_type=Gtk.License.GPL_3_0,
                                 authors=['noobping', 'ChatGPT-4'],

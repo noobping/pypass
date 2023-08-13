@@ -18,12 +18,6 @@ sha256sums=(
   '3f530ac74af9e53e14af5168f004ed46cd0f1ad16babccbd21dc7f6f3c723471'
 )
 
-prepare() {
-    sed -i '/pixbuf = GdkPixbuf.Pixbuf.new_from_file/d' "${srcdir}/gpass.py"
-    sed -i '/logo = Gdk.Texture.new_for_pixbuf/d' "${srcdir}/gpass.py"
-    sed -i "s/logo=logo,/logo_icon_name='com.github.noobping.gpass',/" "${srcdir}/gpass.py"
-}
-
 package() {
   cd "$srcdir"
 
