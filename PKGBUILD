@@ -1,5 +1,5 @@
 pkgname=gpass
-pkgver=0.0.1
+pkgver=0.1.0
 pkgrel=1
 pkgdesc="A GTK4 frontend for Password Store"
 arch=('any')
