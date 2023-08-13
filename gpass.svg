@@ -1,20 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
-  <!-- Outer body of the vault -->
-  <circle cx="60" cy="60" r="58" style="fill:#888888;stroke-width:2;stroke:#555555"/>
-
-  <!-- Inner circle of the vault door -->
-  <circle cx="60" cy="60" r="48" style="fill:#aaaaaa"/>
-
-  <!-- Combination dial -->
-  <circle cx="60" cy="60" r="10" style="fill:#333333"/>
-  <line x1="60" y1="50" x2="60" y2="40" style="stroke:#ffffff;stroke-width:1"/>
-
-  <!-- Bolts -->
-  <circle cx="40" cy="60" r="6" style="fill:#555555"/>
-  <circle cx="80" cy="60" r="6" style="fill:#555555"/>
-  <circle cx="60" cy="40" r="6" style="fill:#555555"/>
-  <circle cx="60" cy="80" r="6" style="fill:#555555"/>
-
-  <!-- Handle -->
-  <path d="M 60 60 L 65 65 L 70 60 L 65 55 Z" style="fill:#555555"/>
+  <!-- Key Shaft -->
+  <rect x="10" y="45" width="60" height="12" fill="goldenrod" />
+  <!-- Circle Handle -->
+  <circle cx="90" cy="51" r="18" stroke="goldenrod" fill="transparent" stroke-width="6" />
+  <!-- Key Teeth -->
+  <rect x="14" y="57" width="7" height="21" fill="goldenrod" />
+  <rect x="25" y="57" width="7" height="16" fill="goldenrod" />
 </svg>
