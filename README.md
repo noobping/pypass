@@ -13,5 +13,6 @@ A GTK4 frontend for [Password Store](https://www.passwordstore.org/) written in 
 
 ## TODO
  - [ ] Integrate Gnome search
- - [ ] Edit password
+ - [ ] Password editing functionality
  - [ ] Move project to Gnome builder
+ - [ ] ...
