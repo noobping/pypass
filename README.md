@@ -1,5 +1,5 @@
 # pypass
-A GTK4 frontend for [Password Store](https://www.passwordstore.org/)
+A GTK4 frontend for [Password Store](https://www.passwordstore.org/) written in python
 
 ![demo](demo.gif)
 
