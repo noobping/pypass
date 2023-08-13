@@ -270,7 +270,6 @@ class Dialog(Gtk.Dialog):
 
 
 class Window(Gtk.ApplicationWindow):
-
     def __init__(self, pass_manager, config_manager, application, **kwargs):
         super().__init__(application=application, **kwargs)
         self.pass_manager = pass_manager
