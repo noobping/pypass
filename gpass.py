@@ -14,7 +14,7 @@ from gi.repository import Gdk, GdkWayland, Gtk, Gio
 
 
 class ConfigManager:
-    def __init__(self, file_name='config.ini', app_name='gpass'):
+    def __init__(self, file_name='config.ini', app_name='pypass'):
         self.config = configparser.ConfigParser()
         config_path = os.path.expanduser(f'~/.config/{app_name}')
         if not os.path.exists(config_path):
@@ -490,7 +490,7 @@ class Application(Gtk.Application):
     """The main application singleton class."""
 
     def __init__(self):
-        super().__init__(application_id='com.github.noobping.gpass',
+        super().__init__(application_id='com.github.noobping.pypass',
                          flags=Gio.ApplicationFlags.DEFAULT_FLAGS)
         self.create_action('quit', lambda *_: self.quit(), ['<primary>q'])
         self.create_action('about', self.on_about_action, ['<primary>a'])
@@ -517,7 +517,7 @@ class Application(Gtk.Application):
         about = Gtk.AboutDialog(transient_for=self.props.active_window,
                                 modal=True,
                                 program_name='Password Store',
-                                logo_icon_name='com.github.noobping.gpass',
+                                logo_icon_name='com.github.noobping.pypass',
                                 version='0.1.0',
                                 license_type=Gtk.License.GPL_3_0,
                                 authors=['noobping', 'ChatGPT-4'],
