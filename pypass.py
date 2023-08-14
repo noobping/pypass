@@ -179,8 +179,8 @@ class Dialog(Gtk.Dialog):
 
         # Create a grid layout
         grid = Gtk.Grid()
-        grid.set_row_spacing(6)
-        grid.set_column_spacing(6)
+        grid.set_row_spacing(3)
+        grid.set_column_spacing(3)
         grid.set_halign(Gtk.Align.CENTER)
         grid.set_valign(Gtk.Align.CENTER)
         grid.set_margin_start(6)
@@ -220,9 +220,31 @@ class Dialog(Gtk.Dialog):
             grid.attach(otp_label,   1, 1, 1, 1)
             grid.attach(copy_button, 2, 1, 1, 1)
 
-        # Handle the rest of the lines (excluding the OTP line)
-        for i, line in enumerate((line for line in lines[1:] if line != otp_line), start=2):
-            if ':' in line:
+        # Determine the line ranges for SSH and PGP keys
+        ssh_key_start = ssh_key_end = pgp_key_start = pgp_key_end = None
+
+        for i, line in enumerate(lines):
+            if "-----BEGIN OPENSSH PRIVATE KEY-----" in line:
+                ssh_key_start = i
+            if "-----END OPENSSH PRIVATE KEY-----" in line:
+                ssh_key_end = i
+            if "-----BEGIN PGP PRIVATE KEY BLOCK-----" in line:
+                pgp_key_start = i
+            if "-----END PGP PRIVATE KEY BLOCK-----" in line:
+                pgp_key_end = i
+
+        # Handle SSH key if present
+        if ssh_key_start is not None and ssh_key_end is not None:
+            self.add_key_widget(grid, '\n'.join(lines[ssh_key_start:ssh_key_end + 1]), len(lines) + 1)
+
+        # Handle PGP key if present
+        if pgp_key_start is not None and pgp_key_end is not None:
+            self.add_key_widget(grid, '\n'.join(lines[pgp_key_start:pgp_key_end + 1]), len(lines) + 2)
+
+        # Handle the rest of the lines (excluding the OTP line and keys)
+        for i, line in enumerate((line for index, line in enumerate(lines[1:]) if line != otp_line and (ssh_key_start is None or not ssh_key_start <= index <= ssh_key_end) and (pgp_key_start is None or not pgp_key_start <= index <= pgp_key_end)), start=2):
+
+            if ':' in line and "otpauth://" not in line:
                 # Check if the line follows the "label: value" pattern
                 label_text, value_text = line.split(':', 1)
                 label_widget = Gtk.Label(label=label_text.strip() + ':', halign=Gtk.Align.END)
@@ -242,7 +264,7 @@ class Dialog(Gtk.Dialog):
 
                 grid.attach(label_widget, 0, i, 1, 1)
                 grid.attach(value_widget, 1, i, 1, 1)
-            else:
+            elif "-----" not in line and "otpauth://" not in line:
                 label_widget = Gtk.Label(label=line)
                 label_widget.set_selectable(True)
                 label_widget.set_wrap(True)
@@ -255,18 +277,43 @@ class Dialog(Gtk.Dialog):
         # Connect the response signal and show the dialog
         self.connect("response", lambda dlg, r: dlg.destroy())
 
-    def on_edit_button_clicked(self, button):
-        print("edit mode")
+    def add_key_widget(self, grid, key_content, row):
+        text_view = Gtk.TextView()
+        text_view.get_buffer().set_text(key_content)
+        text_view.set_wrap_mode(Gtk.WrapMode.NONE)
+        text_view.set_editable(False)
+        text_view.set_visible(False)
+        grid.attach(text_view, 0, row, 2, 1)
+
+        # Extract the key type from the content
+        key_type = "SSH" if "OPENSSH" in key_content else "PGP"
+
+        show_button = Gtk.Button(label=f"Show {key_type} Key")
+        show_button.connect("clicked", self.on_show_button_clicked, text_view)
+        grid.attach(show_button, 0, row, 2, 1)
+
+        # Copy key
+        copy_button = Gtk.Button()
+        copy_button.set_icon_name("edit-copy-symbolic")
+        copy_button.connect("clicked", self.on_copy_button_clicked, text_view)
+        grid.attach(copy_button, 2, row, 1, 1)
 
     def on_show_button_clicked(self, button, label):
         value = not label.get_visible()
         label.set_visible(value)
         button.set_visible(not value)
 
-    def on_copy_button_clicked(self, button, label):
+    def on_copy_button_clicked(self, button, widget):
         clipboard = Gdk.Display.get_default().get_clipboard()
-        text = label.get_label()
+        if isinstance(widget, Gtk.Label):
+            text = widget.get_label()
+        elif isinstance(widget, Gtk.TextView):
+            buf = widget.get_buffer()
+            text = buf.get_text(buf.get_start_iter(), buf.get_end_iter(), True)
         clipboard.set(text)
+
+    def on_edit_button_clicked(self, button):
+        print("edit mode")
 
 
 class Window(Gtk.ApplicationWindow):
