@@ -158,7 +158,7 @@ class PassWrapper:
                 self.notification('Synchronization failed')
 
     def save(self, path: str, content: str) -> None:
-        process = subprocess.Popen(['pass', 'insert', '--force', '--multiline', path], stdin=subprocess.PIPE)
+        process = subprocess.Popen(['pass', 'insert', '--multiline', path], stdin=subprocess.PIPE)
         process.communicate(input=content.encode('utf-8'))
         if process.returncode != 0:
             self.notification('Failed to save the password')
