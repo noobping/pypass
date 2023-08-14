@@ -453,7 +453,7 @@ class Preferences(Gtk.Dialog):
         grid.attach(self.filter_switch, 2, 2, 2, 1)
 
         # auto sync
-        logo3 = Gtk.Image.new_from_icon_name("git-symbolic")
+        logo3 = Gtk.Image.new_from_icon_name("emblem-synchronizing-symbolic")
         grid.attach(logo3, 0, 3, 1, 1)
 
         sync_label = Gtk.Label(label="automatically synchronize:")
