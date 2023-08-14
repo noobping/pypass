@@ -10,7 +10,8 @@ import gi
 gi.require_version('Gdk', '4.0')
 gi.require_version('GdkWayland', '4.0')
 gi.require_version('Gtk', '4.0')
-from gi.repository import Gdk, GdkWayland, Gtk, Gio
+gi.require_version('Notify', '0.7')
+from gi.repository import Gdk, GdkWayland, Gtk, Gio, Notify
 
 
 class ConfigManager:
@@ -150,10 +151,26 @@ class PassWrapper:
 
     def sync(self) -> None:
         if self.auto_sync:
-            subprocess.run(['pass', 'git', 'fetch'])
-            subprocess.run(['pass', 'git', 'pull'])
-        else:
-            print('Automatic syncing is disabled.')
+            result = subprocess.run(['pass', 'git', 'fetch'])
+            if result.returncode == 0:
+                result = subprocess.run(['pass', 'git', 'pull'])
+            if result.returncode != 0:
+                self.notification('Synchronization failed')
+
+    def save(self, path: str, content: str) -> None:
+        process = subprocess.Popen(['pass', 'insert', '--force', '--multiline', path], stdin=subprocess.PIPE)
+        process.communicate(input=content.encode('utf-8'))
+        if process.returncode != 0:
+            self.notification('Failed to save the password')
+
+    def notification(self, message: str):
+        # Initialize the Notify library if not already done
+        if not Notify.is_initted():
+            Notify.init("com.github.noobping.pypass")
+
+        # Create and show the notification
+        notification = Notify.Notification.new("Password Store", message, "dialog-warning")
+        notification.show()
 
 
 class Dialog(Gtk.Dialog):
