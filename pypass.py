@@ -174,27 +174,54 @@ class PassWrapper:
 
 
 class Dialog(Gtk.Dialog):
-    def __init__(self, parent, title, content):    
+    def __init__(self, parent, title, content, pass_manager):    
         Gtk.Dialog.__init__(self, title=title, transient_for=parent, modal=True)
         self.set_default_size(280, 250)
+        self.pass_manager = pass_manager
 
         # Header
         header_bar = Gtk.HeaderBar()
         header_bar.set_show_title_buttons(True)
         self.set_titlebar(header_bar)
 
-        # # Edit or view mode
-        # edit_button = Gtk.Button()
-        # edit_button.set_icon_name("edit-symbolic")
-        # edit_button.connect("clicked", self.on_edit_button_clicked)
-        # header_bar.pack_start(edit_button)
+        # Edit or view mode
+        self.edit_mode = False
+        self.edit_button = Gtk.Button()
+        self.edit_button.set_icon_name("edit-symbolic")
+        self.edit_button.connect("clicked", self.on_edit_button_clicked)
+        header_bar.pack_start(self.edit_button)
 
-        # Create a scrolled window
-        scrolled_window = Gtk.ScrolledWindow()
-        scrolled_window.set_vexpand(True)
-        scrolled_window.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+        # Create a stack to manage the two views
+        self.stack = Gtk.Stack()
+        self.stack.set_transition_type(Gtk.StackTransitionType.SLIDE_LEFT_RIGHT)
 
-        # Create a grid layout
+        # Add the grid view to the stack
+        self.grid_scrolled_window = self.build_grid(content, parent.pass_manager)
+        self.stack.add_titled(self.grid_scrolled_window, "grid", "Grid View")
+        self.stack.set_visible_child_name("grid")
+
+        # Create a text view for edit mode
+        self.edit_view = Gtk.TextView()
+        self.edit_view.get_buffer().set_text(content)
+        self.edit_view.set_wrap_mode(Gtk.WrapMode.WORD)
+
+        # Create a scrolled window for the text editor
+        text_scrolled_window = Gtk.ScrolledWindow()
+        text_scrolled_window.set_vexpand(True)
+        text_scrolled_window.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+        text_scrolled_window.set_child(self.edit_view)
+
+        # Add the text editor to the stack
+        self.stack.add_titled(text_scrolled_window, "text", "Text Editor")
+
+        # Add the stack to the dialog box
+        dialog_box = self.get_child()
+        dialog_box.append(self.stack)
+
+        # Connect the response signal and show the dialog
+        self.connect("response", lambda dlg, r: dlg.destroy())
+
+    def build_grid(self, content: str, pass_manager: PassWrapper) -> Gtk.ScrolledWindow:
         grid = Gtk.Grid()
         grid.set_row_spacing(3)
         grid.set_column_spacing(3)
@@ -204,6 +231,12 @@ class Dialog(Gtk.Dialog):
         grid.set_margin_end(6)
         grid.set_margin_top(6)
         grid.set_margin_bottom(6)
+
+        # Create a scrolled window for the grid view
+        grid_scrolled_window = Gtk.ScrolledWindow()
+        grid_scrolled_window.set_vexpand(True)
+        grid_scrolled_window.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+        grid_scrolled_window.set_child(grid)
 
         # Split the content by lines
         lines = content.split('\n')
@@ -227,7 +260,7 @@ class Dialog(Gtk.Dialog):
         # Check for OTP and display it
         otp_line = next((line for line in lines[1:] if 'otpauth://' in line), None)
         if otp_line:
-            otp = parent.pass_manager.get_otp(title)
+            otp = pass_manager.get_otp(self.get_title())
             label_text = Gtk.Label(label="OTP:")
             otp_label = Gtk.Label(label=otp)
             copy_button = Gtk.Button()
@@ -265,34 +298,30 @@ class Dialog(Gtk.Dialog):
                 # Check if the line follows the "label: value" pattern
                 label_text, value_text = line.split(':', 1)
                 label_widget = Gtk.Label(label=label_text.strip() + ':', halign=Gtk.Align.END)
-                value_widget = Gtk.Label(label=value_text.strip())
-                value_widget.set_selectable(True)
-                value_widget.set_wrap(True)
-                value_widget.set_visible(False)
+                grid.attach(label_widget, 0, i, 1, 1)
 
-                show_button = Gtk.Button(label=self.to_asterisks(value_widget.get_label()))
-                show_button.connect("clicked", self.on_show_button_clicked, value_widget)
+                # Create a label for view mode
+                value_label = Gtk.Label(label=value_text.strip())
+                value_label.set_selectable(True)
+                value_label.set_wrap(True)
+                value_label.set_visible(False)
+                grid.attach(value_label, 1, i, 1, 1)
+
+                show_button = Gtk.Button(label=self.to_asterisks(value_label.get_label()))
+                show_button.connect("clicked", self.on_show_button_clicked, value_label)
                 grid.attach(show_button, 1, i, 1, 1)
 
+                # Copy button
                 copy_button = Gtk.Button()
                 copy_button.set_icon_name("edit-copy-symbolic")
-                copy_button.connect("clicked", self.on_copy_button_clicked, value_widget)
+                copy_button.connect("clicked", self.on_copy_button_clicked, value_label)
                 grid.attach(copy_button, 2, i, 1, 1)
-
-                grid.attach(label_widget, 0, i, 1, 1)
-                grid.attach(value_widget, 1, i, 1, 1)
-            elif "-----" not in line and "otpauth://" not in line:
+            elif "-----" not in line and "otpauth" not in line:
                 label_widget = Gtk.Label(label=line)
                 label_widget.set_selectable(True)
                 label_widget.set_wrap(True)
                 grid.attach(label_widget, 0, i, 2, 1)
-
-        scrolled_window.set_child(grid)
-        dialog_box = self.get_child()
-        dialog_box.append(scrolled_window)
-
-        # Connect the response signal and show the dialog
-        self.connect("response", lambda dlg, r: dlg.destroy())
+        return grid_scrolled_window
 
     def add_key_widget(self, grid, key_content, row) -> None:
         text_view = Gtk.TextView()
@@ -334,7 +363,29 @@ class Dialog(Gtk.Dialog):
         clipboard.set(text)
 
     def on_edit_button_clicked(self, button) -> None:
-        print("edit mode")
+        self.edit_mode = not self.edit_mode
+        if self.edit_mode:
+            self.edit_button.set_icon_name("emblem-ok-symbolic")
+            self.stack.set_visible_child_name("text")
+        else:
+            self.edit_button.set_icon_name("edit-symbolic")
+            self.stack.set_visible_child_name("grid")
+
+            # If exiting edit mode, save the changes
+            buf = self.edit_view.get_buffer()
+            updated_content = buf.get_text(buf.get_start_iter(), buf.get_end_iter(), True)
+            self.pass_manager.save(self.get_title(), updated_content)
+
+            # Rebuild the grid with the updated content
+            new_grid_scrolled_window = self.build_grid(updated_content, self.pass_manager)
+
+            # Replace the old grid in the stack
+            self.stack.remove(self.grid_scrolled_window)
+            self.grid_scrolled_window = new_grid_scrolled_window
+            self.stack.add_titled(self.grid_scrolled_window, "grid", "Grid View")
+            
+            # Optionally, switch to the grid view if not already visible
+            self.stack.set_visible_child_name("grid")
 
 
 class Window(Gtk.ApplicationWindow):
@@ -475,7 +526,7 @@ class Window(Gtk.ApplicationWindow):
             self.show_password_dialog(password_content, item_path)
 
     def show_password_dialog(self, content, title):
-        dialog = Dialog(self, title, content)
+        dialog = Dialog(self, title, content, self.pass_manager)
         dialog.set_visible(True)
 
 
