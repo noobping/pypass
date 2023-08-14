@@ -162,6 +162,10 @@ class PassWrapper:
         process.communicate(input=content.encode('utf-8'))
         if process.returncode != 0:
             self.notification('Failed to save the password')
+        elif self.auto_sync:
+            result = subprocess.run(['pass', 'git', 'push'])
+            if result.returncode != 0:
+                self.notification('Failed to save the password')
 
     def notification(self, message: str):
         # Initialize the Notify library if not already done
