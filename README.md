@@ -9,7 +9,7 @@ A GTK4 frontend for [Password Store](https://www.passwordstore.org/) written in 
  - Or use the filesystem to show the passwords (Needs the password directory in the configuration file)
  - Optional for both: Hide invalid files (non gpg files)
  - Use `pass-otp` to show or copy the OTP code.
- - And ofcourse: **Read** and **copy** your passwords using `pass`!
+ - And ofcourse: **Read**, **copy** & **edit** your passwords using `pass`!
 
 ## TODO
  - [ ] Integrate Gnome search
