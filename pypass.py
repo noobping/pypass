@@ -198,7 +198,7 @@ class Dialog(Gtk.Dialog):
         password_label.set_visible(False)
         grid.attach(password_label, 0, 0, 2, 1)
 
-        show_password_button = Gtk.Button(label="Show password")
+        show_password_button = Gtk.Button(label=self.to_asterisks(password_label.get_label()))
         show_password_button.connect("clicked", self.on_show_button_clicked, password_label)
         grid.attach(show_password_button, 0, 0, 2, 1)
 
@@ -253,7 +253,7 @@ class Dialog(Gtk.Dialog):
                 value_widget.set_wrap(True)
                 value_widget.set_visible(False)
 
-                show_button = Gtk.Button(label=f"Show {label_text.strip()}")
+                show_button = Gtk.Button(label=self.to_asterisks(value_widget.get_label()))
                 show_button.connect("clicked", self.on_show_button_clicked, value_widget)
                 grid.attach(show_button, 1, i, 1, 1)
 
@@ -277,7 +277,7 @@ class Dialog(Gtk.Dialog):
         # Connect the response signal and show the dialog
         self.connect("response", lambda dlg, r: dlg.destroy())
 
-    def add_key_widget(self, grid, key_content, row):
+    def add_key_widget(self, grid, key_content, row) -> None:
         text_view = Gtk.TextView()
         text_view.get_buffer().set_text(key_content)
         text_view.set_wrap_mode(Gtk.WrapMode.NONE)
@@ -298,12 +298,16 @@ class Dialog(Gtk.Dialog):
         copy_button.connect("clicked", self.on_copy_button_clicked, text_view)
         grid.attach(copy_button, 2, row, 1, 1)
 
-    def on_show_button_clicked(self, button, label):
+    def to_asterisks(self, value) -> str:
+        num_asterisks = min(len(value), 25)
+        return "*" * num_asterisks
+
+    def on_show_button_clicked(self, button, label) -> None:
         value = not label.get_visible()
         label.set_visible(value)
         button.set_visible(not value)
 
-    def on_copy_button_clicked(self, button, widget):
+    def on_copy_button_clicked(self, button, widget) -> None:
         clipboard = Gdk.Display.get_default().get_clipboard()
         if isinstance(widget, Gtk.Label):
             text = widget.get_label()
@@ -312,7 +316,7 @@ class Dialog(Gtk.Dialog):
             text = buf.get_text(buf.get_start_iter(), buf.get_end_iter(), True)
         clipboard.set(text)
 
-    def on_edit_button_clicked(self, button):
+    def on_edit_button_clicked(self, button) -> None:
         print("edit mode")
 
 
