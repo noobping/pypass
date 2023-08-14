@@ -178,6 +178,7 @@ class Dialog(Gtk.Dialog):
         Gtk.Dialog.__init__(self, title=title, transient_for=parent, modal=True)
         self.set_default_size(280, 250)
         self.pass_manager = pass_manager
+        self.content = content
 
         # Header
         header_bar = Gtk.HeaderBar()
@@ -363,29 +364,33 @@ class Dialog(Gtk.Dialog):
         clipboard.set(text)
 
     def on_edit_button_clicked(self, button) -> None:
+        self.edit_button.set_sensitive(False)
         self.edit_mode = not self.edit_mode
         if self.edit_mode:
             self.edit_button.set_icon_name("emblem-ok-symbolic")
             self.stack.set_visible_child_name("text")
         else:
-            self.edit_button.set_icon_name("edit-symbolic")
-            self.stack.set_visible_child_name("grid")
-
             # If exiting edit mode, save the changes
             buf = self.edit_view.get_buffer()
             updated_content = buf.get_text(buf.get_start_iter(), buf.get_end_iter(), True)
-            self.pass_manager.save(self.get_title(), updated_content)
+            if self.content != updated_content:
+                self.pass_manager.save(self.get_title(), updated_content)
 
-            # Rebuild the grid with the updated content
-            new_grid_scrolled_window = self.build_grid(updated_content, self.pass_manager)
+                # Rebuild the grid with the updated content
+                new_grid_scrolled_window = self.build_grid(updated_content, self.pass_manager)
 
-            # Replace the old grid in the stack
-            self.stack.remove(self.grid_scrolled_window)
-            self.grid_scrolled_window = new_grid_scrolled_window
-            self.stack.add_titled(self.grid_scrolled_window, "grid", "Grid View")
-            
-            # Optionally, switch to the grid view if not already visible
+                # Replace the old grid in the stack
+                self.stack.remove(self.grid_scrolled_window)
+                self.grid_scrolled_window = new_grid_scrolled_window
+                self.stack.add_titled(self.grid_scrolled_window, "grid", "Grid View")
+
+                # Replace the old content
+                self.content = updated_content
+
+            # switch to the grid view if not already visible
+            self.edit_button.set_icon_name("edit-symbolic")
             self.stack.set_visible_child_name("grid")
+        self.edit_button.set_sensitive(True)
 
 
 class Window(Gtk.ApplicationWindow):
