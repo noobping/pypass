@@ -627,6 +627,7 @@ class Application(Gtk.Application):
         # Initialize PassWrapper
         self.config_manager = ConfigManager()
         self.pass_manager = PassWrapper(self.config_manager)
+        self.create_action('synchronise', lambda *_: self.pass_manager.sync(), ['<primary>s'])
 
     def do_activate(self):
         """Called when the application is activated.
