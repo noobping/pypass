@@ -52,15 +52,19 @@ class ConfigManager:
 
 class PassWrapper:
     def __init__(self, config_manager):
-        self.password_store_path = os.path.expanduser(config_manager.get('Settings', 'password_store_path'))
-        self.filter_valid_files = config_manager.get('Settings', 'filter_valid_files').lower() == 'true'
-        self.auto_sync = config_manager.get('Settings', 'auto_sync').lower() == 'true'
+        self.config_manager = config_manager
+
+    def password_store_path(self) -> str:
+        return os.path.expanduser(self.config_manager.get('Settings', 'password_store_path'))
+    
+    def auto_sync(self) -> bool:
+        return self.config_manager.get('Settings', 'auto_sync').lower() == 'true'
 
     def list_files(self, folder=".", query=None) -> [str]:
         if folder == '.':
-            root_folder = self.password_store_path
+            root_folder = self.password_store_path()
         else:
-            root_folder = os.path.join(self.password_store_path, folder.lstrip('.'))
+            root_folder = os.path.join(self.password_store_path(), folder.lstrip('.'))
         matching_files = []
 
         # Check if the query is provided
@@ -87,7 +91,7 @@ class PassWrapper:
         return matching_files
 
     def list_passwords(self, folder='.', query=None) -> [str]:
-        filter_valid_files = self.filter_valid_files
+        filter_valid_files = self.config_manager.get('Settings', 'filter_valid_files').lower() == 'true'
 
         if query:
             command = ['pass', 'find', query]
@@ -115,9 +119,9 @@ class PassWrapper:
             if indent == current_indent and (stripped_line.startswith("├──") or stripped_line.startswith("└──")):
                 item_name = stripped_line.replace("├──", "").replace("└──", "").strip()
                 if folder != '.':
-                    item_path = os.path.join(self.password_store_path, folder.lstrip('.'), item_name)
+                    item_path = os.path.join(self.password_store_path(), folder.lstrip('.'), item_name)
                 else:
-                    item_path = os.path.join(self.password_store_path, item_name)
+                    item_path = os.path.join(self.password_store_path(), item_name)
                     
                 if filter_valid_files:
                     file_command = ['file', item_path]
@@ -150,7 +154,7 @@ class PassWrapper:
         return result.stdout.decode().strip()
 
     def sync(self) -> None:
-        if self.auto_sync:
+        if self.auto_sync():
             result = subprocess.run(['pass', 'git', 'fetch'])
             if result.returncode == 0:
                 result = subprocess.run(['pass', 'git', 'pull'])
@@ -162,7 +166,7 @@ class PassWrapper:
         process.communicate(input=content.encode('utf-8'))
         if process.returncode != 0:
             self.notification('Failed to save the password')
-        elif self.auto_sync:
+        elif self.auto_sync():
             result = subprocess.run(['pass', 'git', 'push'])
             if result.returncode != 0:
                 self.notification('Failed to save the password')
