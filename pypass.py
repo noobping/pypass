@@ -169,15 +169,15 @@ class PassWrapper:
         elif self.auto_sync():
             result = subprocess.run(['pass', 'git', 'push'])
             if result.returncode != 0:
-                self.notification('Failed to save the password')
+                self.notification('Failed to synchronise the saved password')
 
-    def notification(self, message: str):
+    def notification(self, message: str, type: str = 'warning') -> None:
         # Initialize the Notify library if not already done
         if not Notify.is_initted():
             Notify.init("com.github.noobping.pypass")
 
         # Create and show the notification
-        notification = Notify.Notification.new("Password Store", message, "dialog-warning")
+        notification = Notify.Notification.new("Password Store", message, f"dialog-{type}")
         notification.show()
 
 
@@ -469,7 +469,7 @@ class Window(Gtk.ApplicationWindow):
         self.load_folder(self.current_folder)
         application.create_action('reload', lambda *_: self.load_folder(self.current_folder), ['<primary>r'])
 
-    def on_back_button_clicked(self, button):
+    def on_back_button_clicked(self, _):
         parent_folder = '/'.join(self.current_folder.split('/')[:-1]) if '/' in self.current_folder else '.'
         self.load_folder(parent_folder)
 
