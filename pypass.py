@@ -190,6 +190,10 @@ class PassWrapper:
                 # This will display the error from the 'pass' command
                 notification(stderr.decode('utf-8'), "error")
                 return False
+            elif self.auto_sync():
+                result = subprocess.run(['pass', 'git', 'push'])
+                if result.returncode != 0:
+                    self.notification('Failed to synchronise the new password')
             return True
         except Exception as e:
             print(f"Error: {e}")
