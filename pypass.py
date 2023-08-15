@@ -463,6 +463,7 @@ class Window(Gtk.ApplicationWindow):
         # Initial folder
         self.current_folder = '.'
         self.load_folder(self.current_folder)
+        application.create_action('reload', lambda *_: self.load_folder(self.current_folder), ['<primary>r'])
 
     def on_back_button_clicked(self, button):
         parent_folder = '/'.join(self.current_folder.split('/')[:-1]) if '/' in self.current_folder else '.'
