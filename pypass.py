@@ -180,6 +180,22 @@ class PassWrapper:
         notification = Notify.Notification.new("Password Store", message, f"dialog-{type}")
         notification.show()
 
+    def add_password(path, content) -> bool:
+        try:
+            proc = subprocess.Popen(['pass', 'insert', '--multiline', path], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            stdout, stderr = proc.communicate(input=content.encode('utf-8'))
+            
+            # Check the return code of the process
+            if proc.returncode != 0:
+                # This will display the error from the 'pass' command
+                notification(stderr.decode('utf-8'), "error")
+                return False
+            return True
+        except Exception as e:
+            print(f"Error: {e}")
+            notification(f"Error adding password: {e}", "error")
+            return False
+
 
 class Dialog(Gtk.Dialog):
     def __init__(self, parent, title, content, pass_manager):    
