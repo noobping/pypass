@@ -180,7 +180,7 @@ class PassWrapper:
         notification = Notify.Notification.new("Password Store", message, f"dialog-{type}")
         notification.show()
 
-    def add_password(path, content) -> bool:
+    def add_password(self, path, content) -> bool:
         try:
             proc = subprocess.Popen(['pass', 'insert', '--multiline', path], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             stdout, stderr = proc.communicate(input=content.encode('utf-8'))
@@ -417,6 +417,68 @@ class Dialog(Gtk.Dialog):
         self.edit_button.set_sensitive(True)
 
 
+class NewDialog(Gtk.Dialog):
+    def __init__(self, parent, path, pass_manager):    
+        Gtk.Dialog.__init__(self, title='New password' if path == '.' else path, transient_for=parent, modal=True)
+        self.set_default_size(280, 250)
+        self.pass_manager = pass_manager
+
+        # Header
+        header_bar = Gtk.HeaderBar()
+        header_bar.set_show_title_buttons(True)
+        self.set_titlebar(header_bar)
+
+        # Edit or view mode
+        save_button = Gtk.Button()
+        save_button.set_icon_name("emblem-ok-symbolic")
+        save_button.connect("clicked", self.on_save_button_clicked)
+        header_bar.pack_start(save_button)
+        
+        # Main vertical box layout
+        vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
+        dialog_box = self.get_child()
+        dialog_box.append(vbox)
+        
+        # Filename entry
+        self.filename_entry = Gtk.Entry()
+        self.filename_entry.set_placeholder_text("Enter filename")
+        vbox.append(self.filename_entry)
+
+        # Password content text view
+        self.password_view = Gtk.TextView()
+        vbox.append(self.password_view)
+
+        # Buttons
+        generate_button = Gtk.Button(label="Generate Random Password")
+        generate_button.connect('clicked', self.on_generate_button_clicked)
+        vbox.append(generate_button)
+
+    def on_generate_button_clicked(self, button):
+        random_password = self.generate_random_password()
+        buffer = self.password_view.get_buffer()
+        buffer.set_text(random_password)
+
+    def on_save_button_clicked(self, button):
+        # Retrieve the filename and password content and save it
+        filename = self.filename_entry.get_text()
+        buffer = self.password_view.get_buffer()
+        start_iter, end_iter = buffer.get_bounds()
+        content = buffer.get_text(start_iter, end_iter, False)
+        
+        if self.get_title() != 'New password':
+            filename = self.get_title() + filename
+        
+        if self.pass_manager.add_password(filename, content):
+            self.close()
+
+    @staticmethod
+    def generate_random_password(length=12):
+        # This is a simple example using ASCII characters. Modify as needed.
+        import string, random
+        characters = string.ascii_letters + string.digits + string.punctuation
+        return ''.join(random.choice(characters) for i in range(length))
+
+
 class Window(Gtk.ApplicationWindow):
     def __init__(self, pass_manager, config_manager, application, **kwargs):
         super().__init__(application=application, **kwargs)
@@ -461,6 +523,12 @@ class Window(Gtk.ApplicationWindow):
         menu_button.set_icon_name("open-menu-symbolic")
         header_bar.pack_end(menu_button)
 
+        # Create a 'New Password' button
+        self.new_password_button = Gtk.Button()
+        self.new_password_button.set_icon_name("document-new-symbolic")
+        self.new_password_button.connect('clicked', self.on_new_password_button_clicked)
+        header_bar.pack_start(self.new_password_button)
+
         # Create menu model
         menu_model = Gio.Menu()
         menu_model.append("Synchronise", "app.synchronise")
@@ -488,6 +556,10 @@ class Window(Gtk.ApplicationWindow):
     def on_back_button_clicked(self, _):
         parent_folder = '/'.join(self.current_folder.split('/')[:-1]) if '/' in self.current_folder else '.'
         self.load_folder(parent_folder)
+
+    def on_new_password_button_clicked(self, _):
+        dialog = NewDialog(self, self.current_folder, self.pass_manager)
+        dialog.set_visible(True)
 
     def on_search_button_clicked(self, button, _ = None):
         # Toggle search mode
