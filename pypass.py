@@ -491,6 +491,7 @@ class Window(Gtk.ApplicationWindow):
 
         self.set_default_size(300, 300)
         application.create_action('search', self.on_search_button_clicked, ['<primary>f'])
+        application.create_action('newpwd', self.on_new_password_button_clicked, ['<primary>n'])
 
         # Create a ListBox
         self.list_box = Gtk.ListBox()
@@ -562,7 +563,7 @@ class Window(Gtk.ApplicationWindow):
         parent_folder = '/'.join(self.current_folder.split('/')[:-1]) if '/' in self.current_folder else '.'
         self.load_folder(parent_folder)
 
-    def on_new_password_button_clicked(self, _):
+    def on_new_password_button_clicked(self, button, _ = None):
         dialog = NewDialog(self, self.current_folder, self.pass_manager)
         dialog.set_visible(True)
 
