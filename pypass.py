@@ -559,15 +559,12 @@ class Window(Gtk.ApplicationWindow):
         self.load_folder(self.current_folder)
         application.create_action('reload', lambda *_: self.load_folder(self.current_folder), ['<primary>r'])
 
-    def parent_folder() -> str:
-        return '/'.join(self.current_folder.split('/')[:-1]) if '/' in self.current_folder else '.'
-
     def on_back_button_clicked(self, _):
-        self.load_folder(self.parent_folder())
+        parent_folder = '/'.join(self.current_folder.split('/')[:-1]) if '/' in self.current_folder else '.'
+        self.load_folder(parent_folder)
 
     def on_new_password_button_clicked(self, button, _ = None):
         dialog = NewDialog(self, self.current_folder, self.pass_manager)
-        dialog.connect("destroy", lambda *_: self.load_folder(self.parent_folder()))
         dialog.set_visible(True)
 
     def on_search_button_clicked(self, button, _ = None):
