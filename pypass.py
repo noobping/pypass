@@ -201,9 +201,9 @@ class PassWrapper:
             return False
 
 
-class Dialog(Gtk.Dialog):
+class Dialog(Gtk.Window):
     def __init__(self, parent, title, content, pass_manager):    
-        Gtk.Dialog.__init__(self, title=title, transient_for=parent, modal=True)
+        Gtk.Window.__init__(self, title=title, transient_for=parent, modal=True)
         self.set_default_size(280, 250)
         self.pass_manager = pass_manager
         self.content = content
@@ -242,13 +242,7 @@ class Dialog(Gtk.Dialog):
 
         # Add the text editor to the stack
         self.stack.add_titled(text_scrolled_window, "text", "Text Editor")
-
-        # Add the stack to the dialog box
-        dialog_box = self.get_child()
-        dialog_box.append(self.stack)
-
-        # Connect the response signal and show the dialog
-        self.connect("response", lambda dlg, r: dlg.destroy())
+        self.set_child(self.stack)
 
     def build_grid(self, content: str, pass_manager: PassWrapper) -> Gtk.ScrolledWindow:
         grid = Gtk.Grid()
@@ -421,9 +415,9 @@ class Dialog(Gtk.Dialog):
         self.edit_button.set_sensitive(True)
 
 
-class NewDialog(Gtk.Dialog):
+class NewDialog(Gtk.Window):
     def __init__(self, parent, path, pass_manager):    
-        Gtk.Dialog.__init__(self, title='New password' if path == '.' else path, transient_for=parent, modal=True)
+        Gtk.Window.__init__(self, title='New password' if path == '.' else path, transient_for=parent, modal=True)
         self.set_default_size(280, 250)
         self.pass_manager = pass_manager
 
@@ -440,8 +434,7 @@ class NewDialog(Gtk.Dialog):
         
         # Main vertical box layout
         vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
-        dialog_box = self.get_child()
-        dialog_box.append(vbox)
+        self.set_child(vbox)
         
         # Filename entry
         self.filename_entry = Gtk.Entry()
@@ -565,6 +558,7 @@ class Window(Gtk.ApplicationWindow):
 
     def on_new_password_button_clicked(self, button, _ = None):
         dialog = NewDialog(self, self.current_folder, self.pass_manager)
+        dialog.connect("close_request", lambda *_: self.load_folder(self.current_folder))
         dialog.set_visible(True)
 
     def on_search_button_clicked(self, button, _ = None):
@@ -639,13 +633,12 @@ class Window(Gtk.ApplicationWindow):
         dialog.set_visible(True)
 
 
-class Preferences(Gtk.Dialog):
+class Preferences(Gtk.Window):
     def __init__(self, parent, config_manager):
-        Gtk.Dialog.__init__(self, title="Preferences", transient_for=parent, modal=True)
+        Gtk.Window.__init__(self, title="Preferences", transient_for=parent, modal=True)
         self.config_manager = config_manager
 
         # Get the content area directly
-        box = self.get_child()
         grid = Gtk.Grid()
         grid.set_row_spacing(6)
         grid.set_column_spacing(6)
@@ -703,8 +696,7 @@ class Preferences(Gtk.Dialog):
         self.folder_switch.set_active(self.config_manager.get('Settings', 'use_folder') == 'True')
         self.folder_switch.connect("state-set", self.save_preferences)
         grid.attach(self.folder_switch, 2, 4, 2, 1)
-
-        box.append(grid)
+        self.set_child(grid)
 
     def save_preferences(self, *args):
         self.config_manager.set('Settings', 'password_store_path', self.path_entry.get_text())
