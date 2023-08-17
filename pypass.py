@@ -530,7 +530,7 @@ class Window(Gtk.ApplicationWindow):
         # Create menu model
         menu_model = Gio.Menu()
         menu_model.append("Synchronise", "app.synchronise")
-        menu_model.append("Reload", "app.reload")
+        # menu_model.append("Reload", "app.reload")
         menu_model.append("Preferences", "app.preferences")
         menu_model.append("About", "app.about")
         menu_model.append("Quit", "app.quit")
