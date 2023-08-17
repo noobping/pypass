@@ -171,6 +171,16 @@ class PassWrapper:
             if result.returncode != 0:
                 self.notification('Failed to synchronise the saved password')
 
+    def remove(self, path: str) -> None:
+        if path:
+            process = subprocess.run(["pass", "rm", "--force", path], check=True)
+            if process.returncode != 0:
+                self.notification('Failed to remove the password')
+            elif self.auto_sync():
+                result = subprocess.run(['pass', 'git', 'push'])
+                if result.returncode != 0:
+                    self.notification('Failed to synchronise the removed password')
+
     def notification(self, message: str, type: str = 'warning') -> None:
         # Initialize the Notify library if not already done
         if not Notify.is_initted():
@@ -550,7 +560,19 @@ class Window(Gtk.ApplicationWindow):
         # Initial folder
         self.current_folder = '.'
         self.load_folder(self.current_folder)
+
+        # Shortcuts
         application.create_action('reload', lambda *_: self.load_folder(self.current_folder), ['<primary>r'])
+
+        key_controller = Gtk.EventControllerKey()
+        key_controller.connect("key-pressed", lambda controller, keyval, keycode, state: self.delete_selected_item() if keyval == Gdk.KEY_Delete else None)
+        self.add_controller(key_controller)
+    
+    def delete_selected_item(self):
+        selected_item = self.list_box.get_selected_row().get_child().get_text()
+        if selected_item:
+            self.pass_manager.remove(os.path.join(self.current_folder, selected_item))
+            self.load_folder(self.current_folder)
 
     def on_back_button_clicked(self, _):
         parent_folder = '/'.join(self.current_folder.split('/')[:-1]) if '/' in self.current_folder else '.'
