@@ -436,39 +436,38 @@ class NewDialog(Gtk.Window):
         header_bar.set_show_title_buttons(True)
         self.set_titlebar(header_bar)
 
-        # Edit or view mode
+        # Save button
         save_button = Gtk.Button()
         save_button.set_icon_name("emblem-ok-symbolic")
         save_button.connect("clicked", self.on_save_button_clicked)
         header_bar.pack_start(save_button)
-        
-        # Main vertical box layout
-        vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
-        self.set_child(vbox)
-        
+
+        # Create a scrolled window for the text editor
+        window = Gtk.ScrolledWindow()
+        window.set_vexpand(True)
+        window.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+
+        # Organize widgets in a vertical box
+        vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5)
+
         # Filename entry
-        self.filename_entry = Gtk.Entry()
-        self.filename_entry.set_placeholder_text("Enter filename")
-        vbox.append(self.filename_entry)
+        self.filename = Gtk.Entry()
+        self.filename.set_placeholder_text("Enter filename")
+        vbox.append(self.filename)  # Add filename entry to the box
 
-        # Password content text view
-        self.password_view = Gtk.TextView()
-        vbox.append(self.password_view)
+        # Create a text view for edit mode
+        self.view = Gtk.TextView()
+        self.view.set_wrap_mode(Gtk.WrapMode.WORD)
+        self.view.set_vexpand(True)
+        vbox.append(self.view)
 
-        # Buttons
-        generate_button = Gtk.Button(label="Generate Random Password")
-        generate_button.connect('clicked', self.on_generate_button_clicked)
-        vbox.append(generate_button)
-
-    def on_generate_button_clicked(self, button):
-        random_password = self.generate_random_password()
-        buffer = self.password_view.get_buffer()
-        buffer.set_text(random_password)
+        window.set_child(vbox)
+        self.set_child(window)
 
     def on_save_button_clicked(self, button):
         # Retrieve the filename and password content and save it
-        filename = self.filename_entry.get_text()
-        buffer = self.password_view.get_buffer()
+        filename = self.filename.get_text()
+        buffer = self.view.get_buffer()
         start_iter, end_iter = buffer.get_bounds()
         content = buffer.get_text(start_iter, end_iter, False)
         
@@ -477,13 +476,6 @@ class NewDialog(Gtk.Window):
         
         if self.pass_manager.add_password(filename, content):
             self.close()
-
-    @staticmethod
-    def generate_random_password(length=12):
-        # This is a simple example using ASCII characters. Modify as needed.
-        import string, random
-        characters = string.ascii_letters + string.digits + string.punctuation
-        return ''.join(random.choice(characters) for i in range(length))
 
 
 class Window(Gtk.ApplicationWindow):
