@@ -441,10 +441,11 @@ class NewDialog(Gtk.Window):
         self.set_titlebar(header_bar)
 
         # Save button
-        save_button = Gtk.Button()
-        save_button.set_icon_name("emblem-ok-symbolic")
-        save_button.connect("clicked", self.on_save_button_clicked)
-        header_bar.pack_start(save_button)
+        self.save_button = Gtk.Button()
+        self.save_button.set_icon_name("emblem-ok-symbolic")
+        self.save_button.set_sensitive(False)
+        self.save_button.connect("clicked", self.on_save_button_clicked)
+        header_bar.pack_start(self.save_button)
 
         # Create a scrolled window for the text editor
         window = Gtk.ScrolledWindow()
@@ -457,6 +458,7 @@ class NewDialog(Gtk.Window):
         # Filename entry
         self.filename = Gtk.Entry()
         self.filename.set_placeholder_text("Enter file or account name")
+        self.filename.connect("changed", lambda entry: self.save_button.set_sensitive(bool(entry.get_text().strip())))
         vbox.append(self.filename)
 
         # Create a text view
