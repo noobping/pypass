@@ -3,6 +3,8 @@
 import configparser
 import os
 import re
+import secrets
+import string
 import subprocess
 
 import gi
@@ -11,7 +13,7 @@ gi.require_version('Gdk', '4.0')
 gi.require_version('GdkWayland', '4.0')
 gi.require_version('Gtk', '4.0')
 gi.require_version('Notify', '0.7')
-from gi.repository import Gdk, GdkWayland, Gtk, Gio, Notify
+from gi.repository import Gdk, GdkWayland, Gio, Gtk, Notify
 
 
 class ConfigManager:
@@ -457,18 +459,27 @@ class NewDialog(Gtk.Window):
         self.filename.set_placeholder_text("Enter file or account name")
         vbox.append(self.filename)
 
-        # Create a text view for edit mode
+        # Create a text view
         self.view = Gtk.TextView()
         self.view.set_wrap_mode(Gtk.WrapMode.WORD)
         self.view.set_vexpand(True)
-        
+
         # Get the text buffer and set the text
         buffer = self.view.get_buffer()
 
+        length = int(config_manager.get('Settings', 'password_length'))
+        new_password = self.generate_password(length)
+
+        # Get the template and replace commas with new lines
         comma_separated_text = config_manager.get('Settings', 'template')
-        buffer.set_text(comma_separated_text.replace(", ", "\n"))
+        template_text = comma_separated_text.replace(", ", "\n")
+
+        # Combine the new password and the template, separated by a newline
+        full_text = new_password + "\n" + template_text
+        buffer.set_text(full_text)
         vbox.append(self.view)
 
+        # Add vbox to the scrolled window and add that to the window
         window.set_child(vbox)
         self.set_child(window)
 
@@ -484,6 +495,12 @@ class NewDialog(Gtk.Window):
         
         if self.pass_manager.add_password(filename, content):
             self.close()
+
+    @staticmethod
+    def generate_password(length=25) -> str:
+        alphabet = string.ascii_letters + string.digits + string.punctuation
+        password = ''.join(secrets.choice(alphabet) for i in range(length))
+        return password
 
 
 class Window(Gtk.ApplicationWindow):
@@ -743,13 +760,10 @@ class Preferences(Gtk.Window):
         grid.attach(password_label, 1, 8, 1, 1)
 
         default_password_length = int(self.config_manager.get('Settings', 'password_length'))
-        adjustment = Gtk.Adjustment(lower=0, upper=512, step_increment=1, page_increment=10, value=default_password_length)
+        adjustment = Gtk.Adjustment(lower=8, upper=512, step_increment=1, page_increment=10, value=default_password_length)
         self.spin_button = Gtk.SpinButton(adjustment=adjustment, climb_rate=1, digits=0)
         self.spin_button.connect("changed", self.save_preferences)
         grid.attach(self.spin_button, 0, 9, 6, 1)
-
-        password_info_label = Gtk.Label(label="(Disable with 0)")
-        grid.attach(password_info_label, 0, 10, 6, 1)
 
     def save_preferences(self, *args):
         self.config_manager.set('Settings', 'password_store_path', self.path_entry.get_text())
