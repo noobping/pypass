@@ -428,7 +428,7 @@ class Dialog(Gtk.Window):
 
 
 class NewDialog(Gtk.Window):
-    def __init__(self, parent, path, pass_manager):    
+    def __init__(self, parent, path, pass_manager, config_manager):    
         Gtk.Window.__init__(self, title='New password' if path == '.' else path, transient_for=parent, modal=True)
         self.set_default_size(280, 250)
         self.pass_manager = pass_manager
@@ -454,13 +454,19 @@ class NewDialog(Gtk.Window):
 
         # Filename entry
         self.filename = Gtk.Entry()
-        self.filename.set_placeholder_text("Enter filename")
-        vbox.append(self.filename)  # Add filename entry to the box
+        self.filename.set_placeholder_text("Enter file or account name")
+        vbox.append(self.filename)
 
         # Create a text view for edit mode
         self.view = Gtk.TextView()
         self.view.set_wrap_mode(Gtk.WrapMode.WORD)
         self.view.set_vexpand(True)
+        
+        # Get the text buffer and set the text
+        buffer = self.view.get_buffer()
+
+        comma_separated_text = config_manager.get('Settings', 'template')
+        buffer.set_text(comma_separated_text.replace(", ", "\n"))
         vbox.append(self.view)
 
         window.set_child(vbox)
@@ -573,7 +579,7 @@ class Window(Gtk.ApplicationWindow):
         self.load_folder(parent_folder)
 
     def on_new_password_button_clicked(self, button, _ = None):
-        dialog = NewDialog(self, self.current_folder, self.pass_manager)
+        dialog = NewDialog(self, self.current_folder, self.pass_manager, self.config_manager)
         dialog.connect("close_request", lambda *_: self.load_folder(self.current_folder))
         dialog.set_visible(True)
 
