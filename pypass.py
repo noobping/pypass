@@ -31,6 +31,8 @@ class ConfigManager:
             'filter_valid_files': 'False',
             'auto_sync': 'False',
             'use_folder': 'False',
+            'template': 'username:, login:, url:',
+            'password_length': 25,
         }
         self.save()
 
@@ -654,7 +656,7 @@ class Preferences(Gtk.Window):
 
         # Get the content area directly
         grid = Gtk.Grid()
-        grid.set_row_spacing(6)
+        grid.set_row_spacing(12)
         grid.set_column_spacing(6)
         grid.set_halign(Gtk.Align.CENTER)
         grid.set_valign(Gtk.Align.CENTER)
@@ -712,11 +714,44 @@ class Preferences(Gtk.Window):
         grid.attach(self.folder_switch, 2, 4, 2, 1)
         self.set_child(grid)
 
+        # Template for creating a new password file
+        logo5 = Gtk.Image.new_from_icon_name("document-new-symbolic")
+        grid.attach(logo5, 0, 5, 1, 1)
+
+        template_label = Gtk.Label(label="New password template:")
+        grid.attach(template_label, 1, 5, 1, 1)
+
+        self.template_entry = Gtk.Entry()
+        self.template_entry.set_text(self.config_manager.get('Settings', 'template'))
+        self.template_entry.connect("changed", self.save_preferences)
+        grid.attach(self.template_entry, 0, 6, 6, 1)
+
+        template_info_label = Gtk.Label(label="(comma separated list)")
+        grid.attach(template_info_label, 0, 7, 6, 1)
+
+        # Generate new password (disable with 0)
+        logo6 = Gtk.Image.new_from_icon_name("com.github.noobping.pypass")
+        grid.attach(logo6, 0, 8, 1, 1)
+
+        password_label = Gtk.Label(label="New password length:")
+        grid.attach(password_label, 1, 8, 1, 1)
+
+        default_password_length = int(self.config_manager.get('Settings', 'password_length'))
+        adjustment = Gtk.Adjustment(lower=0, upper=512, step_increment=1, page_increment=10, value=default_password_length)
+        self.spin_button = Gtk.SpinButton(adjustment=adjustment, climb_rate=1, digits=0)
+        self.spin_button.connect("changed", self.save_preferences)
+        grid.attach(self.spin_button, 0, 9, 6, 1)
+
+        password_info_label = Gtk.Label(label="(Disable with 0)")
+        grid.attach(password_info_label, 0, 10, 6, 1)
+
     def save_preferences(self, *args):
         self.config_manager.set('Settings', 'password_store_path', self.path_entry.get_text())
         self.config_manager.set('Settings', 'filter_valid_files', str(self.filter_switch.get_active()))
         self.config_manager.set('Settings', 'auto_sync', str(self.sync_switch.get_active()))
         self.config_manager.set('Settings', 'use_folder', str(self.folder_switch.get_active()))
+        self.config_manager.set('Settings', 'template', self.template_entry.get_text())
+        self.config_manager.set('Settings', 'password_length', str(self.spin_button.get_value_as_int()))
         self.config_manager.save()
 
 
