@@ -500,6 +500,10 @@ class NewDialog(Gtk.Window):
     def generate_password(length=25) -> str:
         alphabet = string.ascii_letters + string.digits + string.punctuation
         password = ''.join(secrets.choice(alphabet) for i in range(length))
+
+        clipboard = Gdk.Display.get_default().get_clipboard()
+        clipboard.set(password)
+
         return password
 
 
