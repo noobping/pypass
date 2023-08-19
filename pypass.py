@@ -493,7 +493,7 @@ class NewDialog(Gtk.Window):
         content = buffer.get_text(start_iter, end_iter, False)
         
         if self.get_title() != 'New password':
-            filename = self.get_title() + filename
+            filename = os.path.join(self.get_title(), filename)
         
         if self.pass_manager.add_password(filename, content):
             self.close()
