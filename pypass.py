@@ -230,7 +230,7 @@ class Dialog(Gtk.Window):
         # Edit or view mode
         self.edit_mode = False
         self.edit_button = Gtk.Button()
-        self.edit_button.set_icon_name("edit-symbolic")
+        self.edit_button.set_icon_name("document-edit-symbolic")
         self.edit_button.connect("clicked", self.on_edit_button_clicked)
         header_bar.pack_start(self.edit_button)
 
@@ -816,7 +816,7 @@ class Application(Gtk.Application):
                                 logo_icon_name='com.github.noobping.pypass',
                                 version='0.1.0',
                                 license_type=Gtk.License.GPL_3_0,
-                                authors=['noobping', 'ChatGPT-4'],
+                                authors=['noobping'],
                                 copyright='© 2023 noobping')
         about.present()
 
