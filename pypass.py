@@ -816,7 +816,7 @@ class Application(Gtk.Application):
                                 logo_icon_name='com.github.noobping.pypass',
                                 version='0.1.0',
                                 license_type=Gtk.License.GPL_3_0,
-                                authors=['noobping', 'ChatGPT-4'],
+                                authors=['noobping'],
                                 copyright='© 2023 noobping')
         about.present()
 
