@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Password Store
+Comment=A GTK4 frontend for Password Store
+Exec=AppRun
+Icon=pypass
+Terminal=false
+Type=Application
+Categories=Utility;Security;
