@@ -1,4 +1,7 @@
 *.AppImage
+AppDir/
+!AppDir/AppRun
+!AppDir/pypass.desktop
 
 ### ArchLinuxPackages ###
 *.tar
