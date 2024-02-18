@@ -20,3 +20,26 @@ A GTK4 frontend for [Password Store](https://www.passwordstore.org/) written in 
  - [ ] Initialize password store if not exists
  - [ ] Add new folders?
  - [ ] Move project to Gnome builder
+
+## Build AppImage
+Create the application image by installing a Alpine Linux chroot in `AppDir':
+
+```
+sudo ./alpine-chroot-install -d ./AppDir -p gtk4.0 adwaita-icon-theme pass pass-otp python3 py3-gobject3
+sudo umount -R ./AppDir/AppDir/{dev,proc,sys}
+```
+
+After that you can install pypass in the chroot
+
+```
+mkdir -p AppDir/usr/share/icons/hicolor/scalable/apps AppDir/usr/bin AppDir/usr/share/applications
+install -Dm755 pypass.py "AppDir/usr/bin/pypass"
+install -Dm644 pypass.svg "AppDir/usr/share/icons/hicolor/scalable/apps/com.github.noobping.pypass.svg"
+install -Dm644 pypass.desktop "AppDir/usr/share/applications/com.github.noobping.pypass.desktop"
+```
+
+And build the AppImage:
+
+```
+ARCH=x86_64 ./appimagetool.AppImage --appimage-extract-and-run -v AppDir
+```
