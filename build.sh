@@ -12,7 +12,7 @@ fi
 echo "Build airrootfs..."
 mkdir -p airrootfs/etc/apk
 cp -R /etc/apk airrootfs/etc/
-doas apk add --no-cache --initdb --root /home/nick/airrootfs pass pass-otp python3 gtk4.0 py3-gobject3
+doas apk add --no-cache --initdb --root /home/nick/airrootfs pass pass-otp python3 gtk4.0 py3-gobject3 libnotify
 doas rm -fr airrootfs/var/cache
 doas rm -fr airrootfs/*/apk
 
