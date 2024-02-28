@@ -1,2 +1,8 @@
 #!/bin/sh
-exec "$APPDIR/usr/bin/pypass -a"
+PYTHON_PATH="$APPDIR/usr/bin/python"
+SCRIPT_PATH="$APPDIR/usr/bin/pypass"
+LIBRARY_PATH="$APPDIR/usr/lib"
+
+export LD_LIBRARY_PATH="$LIBRARY_PATH:$LD_LIBRARY_PATH"
+
+$PYTHON_PATH $SCRIPT_PATH
