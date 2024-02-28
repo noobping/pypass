@@ -6,7 +6,7 @@ then
     curl -L $LATEST_TOOL -o appimagetool.AppImage
     chmod +x appimagetool.AppImage
 
-    doas apk add libc6-compat file fuse appstream squashfs-tools
+    doas apk add libc6-compat file fuse appstream squashfs-tools python3
 fi
 
 echo "Build airrootfs..."
