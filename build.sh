@@ -21,8 +21,8 @@ install -Dm755 pypass.py "airrootfs/usr/bin/pypass"
 install -Dm644 pypass.svg "airrootfs/usr/share/icons/hicolor/scalable/apps/com.github.noobping.pypass.svg"
 install -Dm644 pypass.desktop "airrootfs/usr/share/applications/com.github.noobping.pypass.desktop"
 
-ln -s usr/share/applications/com.github.noobping.pypass.desktop pypass.desktop
-ln -s usr/share/icons/hicolor/scalable/apps/com.github.noobping.pypass.svg com.github.noobping.pypass.svg
+( cd airrootfs/ && ln -s usr/share/applications/com.github.noobping.pypass.desktop pypass.desktop )
+( cd airrootfs/ && ln -s usr/share/icons/hicolor/scalable/apps/com.github.noobping.pypass.svg com.github.noobping.pypass.svg )
 
 python3 -m venv airrootfs/venv
 ( source airrootfs/venv/bin/activate && pip install PyGObject )
