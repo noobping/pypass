@@ -7,7 +7,7 @@ pkgdesc="A GTK4 frontend for Password Store written in python"
 url="https://github.com/noobping/pypass"
 arch="all"
 license="GPL"
-depends="python3 gtk4.0 py3-gobject3"
+depends="python3 gtk4.0 py3-gobject3 libnotify"
 source="pypass.desktop pypass.py pypass.svg"
 builddir="$srcdir/"
 
