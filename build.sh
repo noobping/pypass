@@ -23,7 +23,9 @@ install -Dm644 pypass.desktop "AppDir/usr/share/applications/com.github.noobping
 
 ln -s usr/share/applications/com.github.noobping.pypass.desktop pypass.desktop
 ln -s usr/share/icons/hicolor/scalable/apps/com.github.noobping.pypass.svg com.github.noobping.pypass.svg
-ln -s usr/bin/pypass AppRun
+
+python3 -m venv AppDir/venv
+( source myenv/bin/activate && pip install PyGObject )
 
 echo "Build AppImage..."
 if command -v appimagetool.AppImage >/dev/null 2>&1
