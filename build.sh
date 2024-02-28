@@ -17,9 +17,9 @@ doas rm -fr airrootfs/var/cache
 doas rm -fr airrootfs/*/apk
 
 echo "Install pypass..."
-install -Dm755 pypass.py "AppDir/usr/bin/pypass"
-install -Dm644 pypass.svg "AppDir/usr/share/icons/hicolor/scalable/apps/com.github.noobping.pypass.svg"
-install -Dm644 pypass.desktop "AppDir/usr/share/applications/com.github.noobping.pypass.desktop"
+install -Dm755 pypass.py "airrootfs/usr/bin/pypass"
+install -Dm644 pypass.svg "airrootfs/usr/share/icons/hicolor/scalable/apps/com.github.noobping.pypass.svg"
+install -Dm644 pypass.desktop "airrootfs/usr/share/applications/com.github.noobping.pypass.desktop"
 
 ln -s usr/share/applications/com.github.noobping.pypass.desktop pypass.desktop
 ln -s usr/share/icons/hicolor/scalable/apps/com.github.noobping.pypass.svg com.github.noobping.pypass.svg
