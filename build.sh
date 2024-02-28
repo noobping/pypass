@@ -1,21 +1,33 @@
 #!/bin/sh
-mkdir -p AppDir/usr/share/icons/hicolor/scalable/apps AppDir/usr/bin AppDir/usr/share/applications
-install -Dm755 pypass.py "AppDir/usr/bin/pypass"
-install -Dm644 pypass.svg "AppDir/usr/share/icons/hicolor/scalable/apps/com.github.noobping.pypass.svg"
-install -Dm644 pypass.desktop "AppDir/usr/share/applications/com.github.noobping.pypass.desktop"
-
 if ! command -v appimagetool.AppImage >/dev/null 2>&1
 then
     echo "Download AppImage tool..."
     LATEST_TOOL=$(curl -L "https://api.github.com/repos/AppImage/AppImageKit/releases/latest" | jq -r '.assets[] | select(.name | test("appimagetool-x86_64.AppImage$")) | .browser_download_url')
     curl -L $LATEST_TOOL -o appimagetool.AppImage
     chmod +x appimagetool.AppImage
+
+    doas apk add libc6-compat file fuse appstream squashfs-tools
 fi
+
+echo "Build airrootfs..."
+mkdir -p airrootfs/etc/apk
+cp -R /etc/apk airrootfs/etc/
+doas apk add --no-cache --initdb --root /home/nick/airrootfs pass pass-otp python3 gtk4.0 py3-gobject3
+doas rm -fr airrootfs/var/cache
+doas rm -fr airrootfs/*/apk
+
+echo "Install pypass..."
+install -Dm755 pypass.py "AppDir/usr/bin/pypass"
+install -Dm644 pypass.svg "AppDir/usr/share/icons/hicolor/scalable/apps/com.github.noobping.pypass.svg"
+install -Dm644 pypass.desktop "AppDir/usr/share/applications/com.github.noobping.pypass.desktop"
+
+ln -s usr/share/applications/com.github.noobping.pypass.desktop pypass.desktop
+ln -s usr/share/icons/hicolor/scalable/apps/com.github.noobping.pypass.svg com.github.noobping.pypass.svg
+ln -s usr/bin/pypass AppRun
 
 echo "Build AppImage..."
 if command -v appimagetool.AppImage >/dev/null 2>&1
-then ARCH=x86_64 appimagetool.AppImage -v AppDir
+then appimagetool.AppImage airrootfs
 else
-    ARCH=x86_64 ./appimagetool.AppImage --appimage-extract-and-run -v AppDir
-    rm ./appimagetool.AppImage
+    ./appimagetool.AppImage airrootfs
 fi
