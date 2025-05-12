@@ -1,5 +1,10 @@
-# pypass
-A GTK4 frontend for [Password Store](https://www.passwordstore.org/) written in python
+
+![status: archived](https://img.shields.io/badge/status-archived-red)
+
+> I’m no longer maintaining this codebase because I replaced it with a new project: **[PasswordStore](https://github.com/noobping/PasswordStore)**.
+
+# pypassA GTK4 frontend for [Password Store](https://www.passwordstore.org/) written in python
+
 
 ![demo](demo.gif)
 
