@@ -1,7 +1,7 @@
 
 ![status: archived](https://img.shields.io/badge/status-archived-red)
 
-> I’m no longer maintaining this codebase because I replaced it with a new project: **[PasswordStore](https://github.com/noobping/PasswordStore)**.
+> I no longer maintain this codebase, as I’ve switched to using [ripasso](https://github.com/cortex/ripasso).
 
 # pypassA GTK4 frontend for [Password Store](https://www.passwordstore.org/) written in python
 
