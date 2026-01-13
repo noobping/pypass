@@ -1,7 +1,7 @@
 
 ![status: archived](https://img.shields.io/badge/status-archived-red)
 
-> I no longer maintain this codebase, as I’ve switched to using [ripasso](https://github.com/cortex/ripasso).
+> I no longer maintain this codebase, as I’ve switched to using the [Password Store](https://github.com/noobping/PasswordStore) AppImage.
 
 # pypassA GTK4 frontend for [Password Store](https://www.passwordstore.org/) written in python
 
@@ -19,9 +19,3 @@
  - Read or copy passwords or other properties (like an username or an (ssh)key) in the view.
  - (Optional) Synchronise your changes with `git`
  - And ofcourse: edit your passwords using `pass`!
-
-## TODO
- - [ ] Integrate Gnome search
- - [ ] Initialize password store if not exists
- - [ ] Add new folders?
- - [ ] Move project to Gnome builder
