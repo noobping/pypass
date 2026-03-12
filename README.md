@@ -1,10 +1,11 @@
 
 ![status: archived](https://img.shields.io/badge/status-archived-red)
 
-> I no longer maintain this codebase, as I’ve switched to using the [Password Store](https://github.com/noobping/PasswordStore) AppImage.
+> I no longer maintain this codebase, as I’ve switched to using the [keycord](https://github.com/noobping/keycord).
 
-# pypassA GTK4 frontend for [Password Store](https://www.passwordstore.org/) written in python
+# PyPass
 
+A GTK4 frontend for [`pass`](https://www.passwordstore.org/) written in python
 
 ![demo](demo.gif)
 
